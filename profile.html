@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodVision AI | Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    .avatar {
+      width: 98px;
+      height: 98px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 2.1rem;
+      background: linear-gradient(145deg, #ff9e6c, #ff6f3c);
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pref-section {
+      margin-top: 16px;
+    }
+
+    .pref-section h3 {
+      margin: 0 0 12px;
+    }
+
+    .pref-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .pref-card {
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid rgba(255, 255, 255, .95);
+      padding: 10px 12px;
+      box-shadow: 0 6px 14px rgba(80, 40, 20, .08);
+    }
+
+    .pref-card .pref-label {
+      font-size: .75rem;
+      color: #8a5e45;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .pref-card .pref-value {
+      font-size: .92rem;
+      color: #3d291e;
+      font-weight: 500;
+    }
+
+    .pref-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .pref-tag {
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: #7a3d1f;
+      background: #fff1e5;
+      border: 1px solid rgba(255, 255, 255, .95);
+    }
+
+    .pref-empty {
+      text-align: center;
+      color: #805941;
+      padding: 24px;
+      border: 1px dashed rgba(167, 118, 89, .35);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .6);
+    }
+
+    @media (max-width: 700px) {
+      .pref-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">👤</div>
+        <div>Personal Profile</div>
+      </div>
+      <nav class="nav-links">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="delivery.html">Delivery</a>
+        <a class="nav-link" href="calories.html">Planner</a>
+        <a class="nav-link active" href="profile.html">Profile</a>
+      </nav>
+      <button id="topAuthBtn" class="ghost-btn">Sign Up / Login</button>
+    </header>
+
+    <section class="panel grid grid-2">
+      <div class="card">
+        <div class="avatar">👨‍🍳</div>
+        <h3 id="welcomeText" style="margin:0 0 8px;">Welcome</h3>
+        <p class="hint">This page stores template records locally. All actions are open in guest mode.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Save Personal Record</h3>
+        <div class="field">
+          <label for="displayName">Display Name</label>
+          <input id="displayName" class="input" type="text" placeholder="Your display name" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" class="input" type="email" placeholder="Your email" />
+        </div>
+        <div class="field">
+          <label for="habits">Eating Habits</label>
+          <textarea id="habits" rows="5" placeholder="Describe your habits and preferences..."></textarea>
+        </div>
+        <div class="actions">
+          <button id="saveBtn" class="pill-btn">Save Record</button>
+          <button id="payBtn" class="ghost-btn">Pay for Pro Plan</button>
+        </div>
+        <div id="status" class="status" style="margin-top:8px;"></div>
+      </div>
+    </section>
+
+    <section class="panel pref-section">
+      <div class="card">
+        <h3>🍽️ Food Preferences (from Meal Planner)</h3>
+        <div id="prefContent">
+          <div class="pref-empty">
+            <strong style="display:block; margin-bottom:4px;">No food profile yet</strong>
+            <span>Use the <a href="calories.html" style="color:#ff6633; font-weight:600;">Meal Planner</a> to generate a
+              plan — your preferences will appear here automatically.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="login-modal.js"></script>
+  <script>
+    (function () {
+      var user = FoodAuth.getUser();
+      var welcomeText = document.getElementById("welcomeText");
+      var displayName = document.getElementById("displayName");
+      var email = document.getElementById("email");
+      var habits = document.getElementById("habits");
+      var saveBtn = document.getElementById("saveBtn");
+      var payBtn = document.getElementById("payBtn");
+      var status = document.getElementById("status");
+      var authBinding = FoodAuth.wireTopbarAuth("topAuthBtn", refreshHeader);
+      var PROFILE_KEY = "foodvision.profile.data";
+
+      FoodAuth.showNoHistoryPopup();
+
+      function refreshHeader() {
+        user = FoodAuth.getUser();
+        if (!user) {
+          welcomeText.textContent = "Welcome, visitor";
+        } else {
+          welcomeText.textContent = user.email ? ("Welcome, " + user.email) : ("Welcome, " + (user.phone || "Guest"));
+        }
+      }
+
+      function toggleEditable(enabled) {
+        displayName.disabled = !enabled;
+        email.disabled = !enabled;
+        habits.disabled = !enabled;
+        saveBtn.disabled = !enabled;
+      }
+
+      function setStatus(msg, type) {
+        status.textContent = msg;
+        status.className = "status" + (type ? " " + type : "");
+      }
+
+      function loadProfile() {
+        try {
+          var p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
+          if (!p) return;
+          displayName.value = p.displayName || "";
+          email.value = p.email || ((user && user.email) || "");
+          habits.value = p.habits || "";
+        } catch (err) { }
+      }
+
+      saveBtn.addEventListener("click", function () {
+        var payload = {
+          displayName: displayName.value.trim(),
+          email: email.value.trim(),
+          habits: habits.value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(payload));
+        // Also persist to Jac backend if authenticated
+        if (FoodAuth.getJwt()) {
+          FoodAuth.apiCall("/function/update_profile", {
+            display_name: payload.displayName,
+            habits: payload.habits
+          }, true);
+        }
+        setStatus("Profile saved.", "success");
+      });
+
+      payBtn.addEventListener("click", function () {
+        alert("Pro plan enabled (demo). Guest access is allowed in this template.");
+      });
+
+      refreshHeader();
+      loadProfile();
+      toggleEditable(true);
+
+      // Try to load profile from Jac backend (authoritative source).
+      // Provenance of AI-learned fields comes from the backend's ai_learned_fields array.
+      if (FoodAuth.getJwt()) {
+        FoodAuth.apiCall("/function/get_profile", {}, true).then(function (res) {
+          if (res && res.ok && res.data && res.data.result) {
+            var bp = res.data.result;
+            if (bp.display_name && !displayName.value) displayName.value = bp.display_name;
+            if (bp.habits && !habits.value) habits.value = bp.habits;
+            localStorage.setItem("foodvision.userProfile", JSON.stringify(bp));
+            loadFoodPrefs();
+          }
+        }).catch(function () {});
+      }
+
+      // Load food preferences from Meal Planner
+      function loadFoodPrefs() {
+        var prefContent = document.getElementById("prefContent");
+        var raw = localStorage.getItem("foodvision.userProfile");
+        if (!raw) return;
+        try {
+          var fp = JSON.parse(raw);
+          if (!fp) return;
+
+          var learnedSet = {};
+          (fp.ai_learned_fields || []).forEach(function (k) { learnedSet[k] = true; });
+
+          function learnedBadge(field) {
+            return learnedSet[field] ? ' <span style="font-size:.65rem;color:#1f9d55;font-weight:700;vertical-align:middle;">AI learned</span>' : '';
+          }
+
+          function tagsHtml(arr) {
+            if (!arr || !arr.length) return '<span class="pref-tag" style="opacity:.6;">None</span>';
+            return arr.map(function (v) { return '<span class="pref-tag">' + v + '</span>'; }).join('');
+          }
+
+          prefContent.innerHTML = [
+            '<div class="pref-grid">',
+            '  <div class="pref-card"><div class="pref-label">Dietary Restrictions' + learnedBadge("dietary_restrictions") + '</div><div class="pref-tags">' + tagsHtml(fp.dietary_restrictions) + '</div></div>',
+            '  <div class="pref-card"><div class="pref-label">Allergies' + learnedBadge("allergies") + '</div><div class="pref-tags">' + tagsHtml(fp.allergies) + '</div></div>',
+            '  <div class="pref-card"><div class="pref-label">Cuisine Preferences' + learnedBadge("cuisine_preferences") + '</div><div class="pref-tags">' + tagsHtml(fp.cuisine_preferences) + '</div></div>',
+            '  <div class="pref-card"><div class="pref-label">Flavor Preferences' + learnedBadge("flavor_preferences") + '</div><div class="pref-tags">' + tagsHtml(fp.flavor_preferences) + '</div></div>',
+            '  <div class="pref-card"><div class="pref-label">Cooking Skill Level' + learnedBadge("cooking_skill_level") + '</div><div class="pref-value">' + (fp.cooking_skill_level || 'Unknown') + '</div></div>',
+            '  <div class="pref-card"><div class="pref-label">Available Equipment' + learnedBadge("available_equipment") + '</div><div class="pref-tags">' + tagsHtml(fp.available_equipment) + '</div></div>',
+            '  <div class="pref-card"><div class="pref-label">Nutritional Goals' + learnedBadge("nutritional_goals") + '</div><div class="pref-tags">' + tagsHtml(fp.nutritional_goals) + '</div></div>',
+            '  <div class="pref-card"><div class="pref-label">Disliked Foods' + learnedBadge("disliked_foods") + '</div><div class="pref-tags">' + tagsHtml(fp.disliked_foods) + '</div></div>',
+            '</div>'
+          ].join('');
+        } catch (e) { }
+      }
+      loadFoodPrefs();
+
+      if (authBinding && typeof authBinding.refresh === "function") {
+        authBinding.refresh();
+      }
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodVision AI | Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(140deg, #ff6f3c, #ff9a3d 55%, #ffe4c4);
+      display: grid;
+      place-items: center;
+      z-index: 50;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+
+    .splash.hide {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .splash-content {
+      text-align: center;
+      color: #fff;
+      animation: popIn 0.7s ease;
+      padding: 16px;
+    }
+
+    .food-wheel {
+      width: 116px;
+      height: 116px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      position: relative;
+      border: 4px dashed rgba(255, 255, 255, 0.85);
+      animation: spin 4s linear infinite;
+    }
+
+    .food-wheel span {
+      position: absolute;
+      font-size: 1.35rem;
+      animation: floatIcon 2s ease-in-out infinite;
+    }
+
+    .food-wheel span:nth-child(1) { left: -10px; top: 36px; }
+    .food-wheel span:nth-child(2) { right: -8px; top: 16px; animation-delay: 0.3s; }
+    .food-wheel span:nth-child(3) { right: 18px; bottom: -8px; animation-delay: 0.8s; }
+    .food-wheel span:nth-child(4) { left: 16px; bottom: -6px; animation-delay: 1.1s; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes popIn { from { opacity:0; transform: scale(0.9);} to { opacity:1; transform: scale(1);} }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .shell.reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .login-card {
+      width: min(1020px, 100%);
+      border-radius: 26px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+    }
+
+    .showcase {
+      padding: 40px;
+      background: linear-gradient(145deg, rgba(255,255,255,.52), rgba(255,147,104,.34));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: #7a3d1f;
+      background: rgba(255,255,255,.65);
+      border: 1px solid rgba(255,255,255,.7);
+      font-weight: 600;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: clamp(1.7rem, 2.6vw, 2.4rem);
+      line-height: 1.15;
+    }
+
+    .hero-copy {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 430px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .chip {
+      background: rgba(255,255,255,.7);
+      border: 1px solid rgba(255,255,255,.72);
+      border-radius: 11px;
+      padding: 8px 11px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #7a3d1f;
+    }
+
+    .preview {
+      border-radius: 16px;
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(255,255,255,.8);
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .preview-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 1.35rem;
+      color: #fff;
+      background: linear-gradient(145deg, #ff9e6c, #ff6f3c);
+    }
+
+    .preview small {
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .panel {
+      padding: clamp(20px, 4vw, 36px);
+      background: rgba(255,255,255,.64);
+    }
+
+    .switcher {
+      display: flex;
+      background: rgba(255,255,255,.8);
+      border-radius: 999px;
+      padding: 4px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,.75);
+    }
+
+    .switcher button {
+      flex: 1;
+      border: none;
+      padding: 9px 8px;
+      border-radius: 999px;
+      background: transparent;
+      color: #7a3d1f;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .switcher button:hover {
+      transform: translateY(-1px) scale(1.03);
+      box-shadow: 0 8px 16px rgba(80,40,20,.12);
+    }
+
+    .switcher button.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+    }
+
+    .field { margin-bottom: 12px; }
+    .field label { display:block; font-weight:600; font-size:.9rem; margin-bottom:6px; }
+    .input-wrap { position: relative; }
+
+    .input {
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: 12px;
+      border: 1px solid rgba(167, 118, 89, 0.35);
+      background: rgba(255,255,255,.92);
+      font-size: .97rem;
+      outline: none;
+      color: var(--text);
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 6px;
+    }
+
+    .otp-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .otp-btn,
+    .submit-btn,
+    .guest-btn {
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: inherit;
+      transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .otp-btn,
+    .submit-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      padding: 12px 12px;
+      box-shadow: 0 10px 24px rgba(255, 102, 51, 0.26);
+    }
+
+    .guest-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 11px 12px;
+      background: rgba(255,255,255,.9);
+      color: #7a3d1f;
+      border: 1px solid rgba(255,255,255,.9);
+    }
+
+    .otp-btn::before,
+    .submit-btn::before,
+    .guest-btn::before {
+      content: "";
+      position: absolute;
+      left: -60%;
+      top: -150%;
+      width: 38%;
+      height: 320%;
+      transform: rotate(22deg);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.46), transparent);
+      opacity: 0;
+    }
+
+    .otp-btn:hover,
+    .submit-btn:hover,
+    .guest-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 14px 24px rgba(80,40,20,.2);
+      filter: saturate(1.08);
+    }
+
+    .otp-btn:hover::before,
+    .submit-btn:hover::before,
+    .guest-btn:hover::before {
+      opacity: 1;
+      animation: loginBtnShine 1.2s linear infinite;
+    }
+
+    .otp-btn:hover,
+    .submit-btn:hover {
+      animation: loginBtnPulse 1s ease-in-out infinite;
+    }
+
+    .otp-btn:active,
+    .submit-btn:active,
+    .guest-btn:active {
+      transform: scale(.97);
+    }
+
+    @keyframes loginBtnShine {
+      from { left: -60%; }
+      to { left: 140%; }
+    }
+
+    @keyframes loginBtnPulse {
+      0%, 100% { box-shadow: 0 12px 22px rgba(80,40,20,.2); }
+      50% { box-shadow: 0 18px 30px rgba(80,40,20,.28); }
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
+      margin-bottom: 14px;
+      gap: 8px;
+      font-size: .9rem;
+    }
+
+    .remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+    }
+
+    .remember input { accent-color: var(--accent); }
+
+    .status {
+      min-height: 24px;
+      margin-top: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    .status.success { color: var(--success); }
+    .status.error { color: var(--error); }
+
+    .small-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 960px) {
+      .login-card { grid-template-columns: 1fr; }
+      .showcase { min-height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="splash" id="splash">
+    <div class="splash-content">
+      <div class="food-wheel">
+        <span>🍜</span><span>🥗</span><span>🍕</span><span>🍣</span>
+      </div>
+      <h1 style="margin:0; font-size:clamp(1.6rem, 3.5vw, 2.2rem);">FoodVision AI</h1>
+      <p style="margin:8px 0 0; opacity:.95;">Recognize food. Generate recipes. Create moments.</p>
+    </div>
+  </div>
+
+  <main class="shell" id="shell">
+    <section class="login-card">
+      <aside class="showcase">
+        <div>
+          <div class="badge">✨ Image-to-Recipe Assistant</div>
+          <h1 class="hero-title">Log in and turn photos into personalized recipes.</h1>
+          <p class="hero-copy">Phone OTP, email password, and guest mode are all supported. In this template, all features are available to guests and outputs are demo-only.</p>
+          <div class="chips">
+            <span class="chip">Food Recognition</span>
+            <span class="chip">Recipe Generation</span>
+            <span class="chip">Calorie Insights</span>
+          </div>
+        </div>
+        <div class="preview">
+          <div class="preview-icon">📷</div>
+          <div>
+            <strong>Live Demo</strong>
+            <small>Detected: Tomato Pasta · Confidence 96% · Recipe in 12 min</small>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <h2 style="margin:0;">Welcome Back</h2>
+        <p style="margin:8px 0 12px; color:var(--muted);">Choose your login method.</p>
+
+        <div class="switcher" role="tablist" aria-label="Login mode">
+          <button id="tab-email" class="active" type="button">Email</button>
+          <button id="tab-phone" type="button">Phone OTP</button>
+        </div>
+
+        <form id="email-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input class="input" id="email" type="email" placeholder="chef@foodvision.ai" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <input class="input" id="password" type="password" placeholder="Enter your password" minlength="6" required />
+              <button class="eye-btn" id="togglePassword" type="button" aria-label="Toggle password">👁️</button>
+            </div>
+          </div>
+          <div class="meta-row">
+            <label class="remember"><input id="rememberEmail" type="checkbox" /> Remember me</label>
+            <a href="#" onclick="return false;" style="color:#8a4f2f; font-weight:600;">Forgot password?</a>
+          </div>
+          <button class="submit-btn" type="submit" style="width:100%;">Login with Email</button>
+        </form>
+
+        <form id="phone-form" class="hidden" novalidate>
+          <div class="field">
+            <label for="phone">Phone Number</label>
+            <div class="otp-row">
+              <input class="input" id="phone" type="tel" placeholder="e.g. +1 734 555 8899" required />
+              <button class="otp-btn" id="sendCodeBtn" type="button">Send Code</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="otp">Verification Code</label>
+            <input class="input" id="otp" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code" required />
+          </div>
+          <button class="submit-btn" type="submit" style="width:100%;">Verify & Login</button>
+        </form>
+
+        <button class="guest-btn" id="guestBtn" type="button">Continue as Guest</button>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+        <p class="small-note">OTP is simulated for demo. You will see a verification message on this page.</p>
+      </section>
+    </section>
+  </main>
+
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      var splash = document.getElementById("splash");
+      var shell = document.getElementById("shell");
+      var statusEl = document.getElementById("status");
+
+      var emailForm = document.getElementById("email-form");
+      var phoneForm = document.getElementById("phone-form");
+      var tabEmail = document.getElementById("tab-email");
+      var tabPhone = document.getElementById("tab-phone");
+
+      var emailInput = document.getElementById("email");
+      var passwordInput = document.getElementById("password");
+      var rememberEmail = document.getElementById("rememberEmail");
+      var togglePassword = document.getElementById("togglePassword");
+
+      var phoneInput = document.getElementById("phone");
+      var otpInput = document.getElementById("otp");
+      var sendCodeBtn = document.getElementById("sendCodeBtn");
+      var guestBtn = document.getElementById("guestBtn");
+
+      var REMEMBER_KEY = "foodvision.login.rememberEmail";
+
+      function setStatus(message, type) {
+        statusEl.textContent = message || "";
+        statusEl.className = "status" + (type ? " " + type : "");
+      }
+
+      // In demo mode, any input is accepted and a temporary session is created.
+      function validEmail(v) {
+        return true;
+      }
+
+      function validPhone(v) {
+        return true;
+      }
+
+      function targetUrl() {
+        return FoodAuth.getReturnUrl() || "index.html";
+      }
+
+      function goToAppPage() {
+        var next = targetUrl() || "index.html";
+        var current = window.location.pathname.split("/").pop() || "";
+        var blocked = {
+          "": true,
+          "food-login.html": true,
+          "login.html": true
+        };
+
+        if (blocked[next]) {
+          next = "index.html";
+        }
+        if (next === current) {
+          next = "index.html";
+        }
+
+        window.location.href = next;
+      }
+
+      function switchMode(mode) {
+        var email = mode === "email";
+        tabEmail.classList.toggle("active", email);
+        tabPhone.classList.toggle("active", !email);
+        emailForm.classList.toggle("hidden", !email);
+        phoneForm.classList.toggle("hidden", email);
+        setStatus("", "");
+      }
+
+      togglePassword.addEventListener("click", function () {
+        var hidden = passwordInput.type === "password";
+        passwordInput.type = hidden ? "text" : "password";
+        togglePassword.textContent = hidden ? "🙈" : "👁️";
+      });
+
+      tabEmail.addEventListener("click", function () { switchMode("email"); });
+      tabPhone.addEventListener("click", function () { switchMode("phone"); });
+
+      sendCodeBtn.addEventListener("click", function () {
+        var phone = phoneInput.value.trim();
+        if (!phone) {
+          phone = "+1 000 000 0000";
+        }
+        var code = FoodAuth.sendOtp(phone);
+        setStatus("Verification message sent. Demo code: " + code + " (demo, any code will work).", "success");
+      });
+
+      emailForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var email = emailInput.value.trim() || "guest@foodvision.local";
+
+        FoodAuth.loginEmail(email);
+        if (rememberEmail.checked) {
+          localStorage.setItem(REMEMBER_KEY, email);
+        } else {
+          localStorage.removeItem(REMEMBER_KEY);
+        }
+
+        setStatus("Login successful (temporary session). Entering app...", "success");
+        setTimeout(goToAppPage, 350);
+      });
+
+      phoneForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var phone = phoneInput.value.trim() || "+1 000 000 0000";
+        FoodAuth.loginPhone(phone);
+        setStatus("Phone login successful (temporary session). Entering app...", "success");
+        setTimeout(goToAppPage, 350);
+      });
+
+      guestBtn.addEventListener("click", function () {
+        FoodAuth.loginGuest();
+        setStatus("Guest mode enabled (temporary session). Entering app...", "success");
+        setTimeout(goToAppPage, 300);
+      });
+
+      var remembered = localStorage.getItem(REMEMBER_KEY);
+      if (remembered) {
+        emailInput.value = remembered;
+        rememberEmail.checked = true;
+      }
+
+      var reason = new URLSearchParams(window.location.search).get("reason");
+      var loggedOut = new URLSearchParams(window.location.search).get("loggedout");
+      if (reason === "payment-required" || reason === "profile-required") {
+        setStatus("Please log in to continue this action (guest is accepted).", "error");
+      }
+
+      if (loggedOut === "1") {
+        setStatus("You have logged out successfully.", "success");
+      }
+
+      setTimeout(function () {
+        splash.classList.add("hide");
+        shell.classList.add("reveal");
+      }, 1800);
+    })();
+  </script>
+</body>
+</html>
