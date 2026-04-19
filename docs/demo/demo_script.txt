@@ -1,0 +1,127 @@
+FoodVision AI — 3-Minute Demo Script
+Target runtime: 180s. Roughly 440 words at a calm pace.
+Cues in [brackets] tell the speaker what's on screen.
+
+
+[SCENE 1 — 00:00 to 00:25, home page + login]
+
+Hi, this is FoodVision AI. The pitch is simple. Take a photo of what's in
+your fridge, tell it what you feel like eating, and it hands you back a
+recipe the model thinks you'll actually make.
+
+[00:05 — click Sign Up / Login]
+
+I'll sign in with the demo account. Email, password, submit.
+
+[00:18 — modal closes, topbar flips to Logout]
+
+I'm in. The topbar shows the account chip. Over to the planner.
+
+
+[SCENE 2 — 00:25 to 01:25, first meal, AI learns]
+
+[00:25 — planner page, empty history]
+
+Fresh account, no meal history yet.
+
+[00:28 — drop fridge.jpg on upload zone]
+
+I drop in a fridge photo. Tomatoes, pasta, eggs, a block of cheese.
+
+[00:33 — typing in message box]
+
+In the message box I type, "i like italian food, what can i make tonight."
+Short and casual, the way anyone would ask.
+
+[00:40 — click Generate, image preview appears, skeleton loads]
+
+Hit generate. The backend is running Qwen3-VL-32B. It looks at the image,
+reads my message, and plans a meal. While it's thinking, here's the bit
+worth explaining. The request carries a user profile object. On this
+account it starts empty. Qwen is about to infer that I like Italian and
+savory food from what I just typed, and the backend writes those
+inferences back onto my Jac graph as AI-learned fields.
+
+[01:10 — recipe card renders, "Profile updated" chip]
+
+Recipe's back. Dish, reason, ingredients, steps, macros. See that chip at
+the top, "Profile updated." Cuisine got Italian. Flavors got savory.
+
+[01:20 — click Profile in nav]
+
+Let me jump to the profile page.
+
+
+[SCENE 3 — 01:25 to 02:20, manual override]
+
+[01:25 — profile page, green cards with "AI learned" pill]
+
+The cuisine and flavor cards are outlined in green with an AI learned
+pill. That's how I know the model put them there, not me.
+
+[01:30 — click Edit preferences]
+
+Now I want to correct it. I actually cook Japanese and Korean most nights.
+
+[01:38 — edit cuisine field]
+
+Cuisine field goes from Italian to Japanese, Korean.
+
+[01:44 — type into allergies]
+
+I'll add peanuts to allergies while I'm here. That's my own input, not
+inferred.
+
+[01:50 — change skill dropdown]
+
+And I bump cooking skill from Intermediate to Advanced.
+
+[01:55 — click Save]
+
+Save.
+
+[02:00 — cards re-render in orange]
+
+Cards re-render. Cuisine is orange now. The AI learned pill is gone
+because these are my edits. Allergies shows peanuts. Skill reads advanced.
+
+[02:10 — click Planner]
+
+Back to the planner.
+
+
+[SCENE 4 — 02:20 to 03:00, second meal uses edited profile]
+
+[02:20 — drop leftovers.jpg]
+
+Second photo. Leftover rice, soy sauce, scallions.
+
+[02:24 — type message]
+
+Message reads, "something quick for dinner." No cuisine hint this time. I
+want the profile to do the talking.
+
+[02:30 — click Generate]
+
+[02:32 — open DevTools, Network tab, analyze_meal Payload]
+
+While it's loading, I'll crack open devtools. Here's the analyze_meal
+payload. The user profile carries Japanese and Korean cuisine, peanuts in
+allergies, skill set to advanced. The edits I made on the profile page
+are flowing straight into the Qwen prompt.
+
+[02:45 — result renders]
+
+Result lands. Dish is Japanese. The recipe steers around peanuts on its
+own. No rice-and-soy-sauce Korean suggestion the image alone would have
+pushed for.
+
+[02:52 — click Delivery]
+
+Quick look at the delivery page. Local restaurants from OpenStreetMap if I
+don't feel like cooking.
+
+[02:58 — cut to home, outro card]
+
+That's FoodVision AI. Jac backend, Qwen3-VL-32B, and a profile that
+listens to both the model and the user.

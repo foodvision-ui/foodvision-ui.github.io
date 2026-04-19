@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodVision AI | Meal Planner Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 16px;
+    }
+
+    .assistant-card,
+    .result-card {
+      position: relative;
+      overflow: visible;
+    }
+
+    .assistant-card h3,
+    .result-card h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .upload-stage {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .upload-box {
+      border: 2px dashed rgba(167, 118, 89, .35);
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+      background: rgba(255, 255, 255, .68);
+      transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-input-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    .upload-box.drag-over {
+      border-color: #ff7a41;
+      background: rgba(255, 245, 236, .9);
+      box-shadow: 0 14px 24px rgba(255, 102, 51, .2);
+      transform: scale(1.01);
+    }
+
+    .upload-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -70%;
+      width: 48%;
+      height: 100%;
+      transform: skewX(-18deg);
+      background: linear-gradient(110deg, transparent, rgba(255, 255, 255, .62), transparent);
+      animation: scanLine 2.8s linear infinite;
+      pointer-events: none;
+    }
+
+    .upload-box:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(255, 102, 51, .14);
+    }
+
+    .upload-box.has-file {
+      border-color: #ff8f52;
+      box-shadow: 0 14px 24px rgba(255, 102, 51, .18);
+    }
+
+    .left-preview {
+      position: absolute;
+      left: -64px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-3deg);
+      width: 132px;
+      height: 132px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .95);
+      border: 2px solid rgba(255, 255, 255, .9);
+      box-shadow: 0 16px 30px rgba(80, 40, 20, .22);
+      z-index: 3;
+      overflow: hidden;
+      animation: floatCard 2.6s ease-in-out infinite;
+    }
+
+    .left-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .left-preview::after {
+      content: "Uploaded";
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .72rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #ff6633, #ff9f43);
+      box-shadow: 0 4px 10px rgba(255, 102, 51, .25);
+    }
+
+    .chat-box {
+      background: rgba(255, 255, 255, .72);
+      border: 1px solid rgba(255, 255, 255, .82);
+      border-radius: 14px;
+      min-height: 170px;
+      max-height: 250px;
+      overflow: auto;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .bubble {
+      max-width: 92%;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: .9rem;
+      line-height: 1.45;
+      box-shadow: 0 6px 12px rgba(80, 40, 20, .08);
+      animation: bubbleIn .25s ease;
+      word-break: break-word;
+    }
+
+    .bubble.user {
+      justify-self: end;
+      background: linear-gradient(135deg, #ff814d, #ffb24d);
+      color: #fff;
+    }
+
+    .bubble.assistant {
+      justify-self: start;
+      background: rgba(255, 255, 255, .95);
+      color: #6f4a36;
+      border: 1px solid rgba(255, 255, 255, .9);
+    }
+
+    .prompt-wrap {
+      display: grid;
+      gap: 8px;
+    }
+
+    .prompt-input {
+      width: 100%;
+      min-height: 88px;
+      border-radius: 12px;
+      border: 1px solid rgba(167, 118, 89, .35);
+      background: rgba(255, 255, 255, .92);
+      color: var(--text);
+      font-family: inherit;
+      font-size: .95rem;
+      padding: 10px 12px;
+      outline: none;
+      resize: vertical;
+    }
+
+    .prompt-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .action-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 12px;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 12px 22px rgba(80, 40, 20, .16);
+    }
+
+    .action-btn.primary {
+      color: #fff;
+      background: linear-gradient(120deg, #ff6633, #ff9f43, #ff7043);
+      background-size: 180% 180%;
+      animation: gradientShift 2.6s ease infinite;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-btn.primary::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, .36), transparent 48%);
+      pointer-events: none;
+    }
+
+    .action-btn.secondary {
+      color: #7a3d1f;
+      background: rgba(255, 255, 255, .85);
+      border: 1px solid rgba(255, 255, 255, .9);
+    }
+
+    .action-btn.loading {
+      pointer-events: none;
+      filter: saturate(1.08);
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 14px 24px rgba(80, 40, 20, .18);
+    }
+
+    .action-btn.loading::before {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      right: 12px;
+      top: calc(50% - 8px);
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, .55);
+      border-top-color: #fff;
+      animation: spin .8s linear infinite;
+    }
+
+    .status-row {
+      margin-top: 8px;
+      min-height: 22px;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    .result-top {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .85);
+      background: rgba(255, 255, 255, .75);
+      min-height: 240px;
+      margin-bottom: 12px;
+    }
+
+    .result-top img {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .analysis-chip {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, rgba(255, 102, 51, .95), rgba(255, 159, 67, .95));
+      box-shadow: 0 8px 16px rgba(80, 40, 20, .2);
+    }
+
+    .result-top-hint {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: #805941;
+      font-weight: 600;
+      padding: 14px;
+    }
+
+    .generating {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 10px;
+      background: linear-gradient(120deg, rgba(255, 245, 236, .93), rgba(255, 236, 219, .9));
+      backdrop-filter: blur(2px);
+    }
+
+    .output-generating {
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 12px;
+      min-height: 260px;
+      padding: 30px;
+      border-radius: 14px;
+      background: linear-gradient(120deg, rgba(255, 245, 236, .93), rgba(255, 236, 219, .9));
+      border: 1px solid rgba(255, 255, 255, .85);
+      animation: fadeInUp .4s ease;
+    }
+
+    .output-generating .spinner {
+      width: 56px;
+      height: 56px;
+    }
+
+    .output-generating .gen-label {
+      font-weight: 700;
+      color: #7a3d1f;
+      font-size: 1.05rem;
+    }
+
+    .output-generating .gen-sub {
+      color: #805941;
+      font-size: .88rem;
+      text-align: center;
+      max-width: 320px;
+      line-height: 1.5;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-top-reveal img {
+      animation: imageReveal .5s ease;
+    }
+
+    @keyframes imageReveal {
+      from {
+        opacity: 0;
+        transform: scale(1.03);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .spinner {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 159, 67, .28);
+      border-top-color: #ff6633;
+      animation: spin 0.9s linear infinite;
+    }
+
+    .dots::after {
+      content: "";
+      display: inline-block;
+      width: 1.2em;
+      text-align: left;
+      animation: dots 1.2s steps(4, end) infinite;
+    }
+
+    .skeleton-lines {
+      width: min(460px, 92%);
+      display: grid;
+      gap: 8px;
+    }
+
+    .skeleton-lines span {
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255, 214, 183, .35), rgba(255, 255, 255, .75), rgba(255, 214, 183, .35));
+      background-size: 180% 100%;
+      animation: shimmer 1.1s linear infinite;
+    }
+
+    .skeleton-lines span:nth-child(1) {
+      width: 96%;
+    }
+
+    .skeleton-lines span:nth-child(2) {
+      width: 88%;
+    }
+
+    .skeleton-lines span:nth-child(3) {
+      width: 92%;
+    }
+
+    .skeleton-lines span:nth-child(4) {
+      width: 77%;
+    }
+
+    .output-wrap {
+      background: rgba(255, 255, 255, .78);
+      border: 1px solid rgba(255, 255, 255, .85);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 260px;
+      max-height: 540px;
+      overflow: auto;
+      color: #523526;
+    }
+
+    .empty-output {
+      min-height: 210px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: #805941;
+      border: 1px dashed rgba(167, 118, 89, .35);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .62);
+      padding: 18px;
+    }
+
+    .result-section {
+      margin-bottom: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .82);
+      border: 1px solid rgba(255, 255, 255, .9);
+      padding: 10px;
+      box-shadow: 0 8px 16px rgba(80, 40, 20, .08);
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: .95rem;
+      color: #6e4028;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .kv-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .kv-card {
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid rgba(255, 255, 255, .95);
+      padding: 8px;
+    }
+
+    .kv-card .k {
+      font-size: .75rem;
+      color: #8a5e45;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 4px;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag-chip {
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: #7a3d1f;
+      background: #fff1e5;
+      border: 1px solid rgba(255, 255, 255, .95);
+    }
+
+    .recipe-title {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+      color: #4b2f22;
+    }
+
+    .recipe-reason {
+      margin: 0;
+      color: #6f4a36;
+      line-height: 1.5;
+      font-size: .9rem;
+    }
+
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .nutrition-box {
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .88);
+      border: 1px solid rgba(255, 255, 255, .95);
+      padding: 8px;
+      font-size: .84rem;
+      line-height: 1.4;
+    }
+
+    .steps-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: #654431;
+      line-height: 1.5;
+      font-size: .9rem;
+    }
+
+    .steps-list li {
+      margin-bottom: 6px;
+    }
+
+    .result-card.reveal-pop {
+      animation: revealPop .45s ease;
+    }
+
+    .magnetic-card {
+      transform-style: preserve-3d;
+      transition: transform .16s ease;
+    }
+
+    @keyframes scanLine {
+      0% {
+        left: -70%;
+      }
+
+      100% {
+        left: 140%;
+      }
+    }
+
+    @keyframes floatCard {
+
+      0%,
+      100% {
+        transform: translateY(-50%) rotate(-3deg);
+      }
+
+      50% {
+        transform: translateY(calc(-50% - 7px)) rotate(-1deg);
+      }
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    @keyframes bubbleIn {
+      from {
+        opacity: .3;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 0% 0;
+      }
+
+      100% {
+        background-position: 180% 0;
+      }
+    }
+
+    @keyframes revealPop {
+      from {
+        opacity: .55;
+        transform: scale(.985);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes dots {
+      0% {
+        content: "";
+      }
+
+      25% {
+        content: ".";
+      }
+
+      50% {
+        content: "..";
+      }
+
+      75% {
+        content: "...";
+      }
+
+      100% {
+        content: "";
+      }
+    }
+
+    @media (max-width: 980px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .kv-grid,
+      .nutrition-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .left-preview {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        width: 100%;
+        height: 178px;
+        margin-bottom: 10px;
+        animation: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">🍲</div>
+        <div>Meal Planner Assistant</div>
+      </div>
+      <nav class="nav-links">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link active" href="calories.html">Planner</a>
+        <a class="nav-link" href="profile.html">Profile</a>
+        <a class="nav-link" href="delivery.html">Delivery</a>
+      </nav>
+      <button id="topAuthBtn" class="ghost-btn">Sign Up / Login</button>
+    </header>
+
+    <section class="panel workspace">
+      <div class="card assistant-card magnetic-card">
+        <h3>1) Upload Meal/Fridge Picture</h3>
+        <div class="upload-stage">
+          <div id="leftPreview" class="left-preview hidden">
+            <img id="leftPreviewImg" alt="Uploaded image preview" src="" />
+          </div>
+          <div class="upload-box" id="uploadBox">
+            <div style="font-size:2rem;">🖼️</div>
+            <p style="margin:6px 0;">Click to upload an image for meal planning</p>
+            <small class="hint">JPG/PNG/WEBP supported. Powered by Qwen3-VL-32B via OpenRouter.</small>
+            <input id="imageInput" class="upload-input-overlay" type="file" accept="image/*" />
+          </div>
+        </div>
+
+        <h3 style="margin-top:14px;">2) Describe What You Want</h3>
+        <div id="chatBox" class="chat-box"></div>
+        <div class="prompt-wrap">
+          <textarea id="userPrompt" class="prompt-input"
+            placeholder="Example: I want something sour and salty to eat tonight. I only have 35 minutes."></textarea>
+          <div class="actions">
+            <button id="generateBtn" class="action-btn primary" type="button">Generate Meal Plan</button>
+          </div>
+        </div>
+        <div id="leftStatus" class="status-row hint">Guest notice: conversation is not saved permanently in this demo.
+        </div>
+      </div>
+
+      <div id="resultCard" class="card result-card magnetic-card">
+        <h3>Assistant Output</h3>
+        <div class="result-top">
+          <div id="resultTopHint" class="result-top-hint">Your uploaded picture will appear here after generation.</div>
+          <img id="mainPreview" alt="Result preview" src="" class="hidden" />
+          <span id="analysisChip" class="analysis-chip hidden">Template Output</span>
+          <div id="generatingLayer" class="generating hidden">
+            <div class="spinner"></div>
+            <div style="font-weight:700; color:#7a3d1f;">Generating<span class="dots"></span></div>
+            <div class="skeleton-lines">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+        <div id="outputBox" class="output-wrap">
+          <div class="empty-output">
+            <div>
+              <strong style="display:block; margin-bottom:6px;">No generated plan yet</strong>
+              <span>Upload a picture and click Generate Meal Plan. The result will show in elegant sections here.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    (function () {
+      var uploadBox = document.getElementById("uploadBox");
+      var imageInput = document.getElementById("imageInput");
+      var leftPreview = document.getElementById("leftPreview");
+      var leftPreviewImg = document.getElementById("leftPreviewImg");
+      var mainPreview = document.getElementById("mainPreview");
+      var analysisChip = document.getElementById("analysisChip");
+      var resultTopHint = document.getElementById("resultTopHint");
+
+      var chatBox = document.getElementById("chatBox");
+      var userPrompt = document.getElementById("userPrompt");
+      var generateBtn = document.getElementById("generateBtn");
+      var leftStatus = document.getElementById("leftStatus");
+      var authBinding = FoodAuth.wireTopbarAuth("topAuthBtn");
+
+      var outputBox = document.getElementById("outputBox");
+      var generatingLayer = document.getElementById("generatingLayer");
+      var resultCard = document.getElementById("resultCard");
+      FoodAuth.showNoHistoryPopup();
+      var pendingAutoGenerate = false;
+      var currentImageFile = null;
+      var currentImageMeta = null;
+      var currentImageUrl = null;
+
+      var conversation = [];
+
+      var userProfile = {
+        dietary_restrictions: [],
+        allergies: [],
+        cuisine_preferences: ["Italian"],
+        flavor_preferences: ["sour", "salty"],
+        disliked_foods: [],
+        cooking_skill_level: "Intermediate",
+        available_equipment: ["oven", "baking dish", "mixing bowls"],
+        nutritional_goals: [],
+        other_preferences: []
+      };
+
+      // Per-account cache key — prevents one user's preferences from leaking
+      // into another user's view on the same browser.
+      function profileCacheKey() {
+        return FoodAuth.scopedKey("foodvision.userProfile");
+      }
+
+      // Hydrate userProfile from the last-saved cache so repeat sessions
+      // don't lose learned preferences before the backend fetch lands.
+      // Only read a cache that belongs to the CURRENT signed-in user.
+      try {
+        var pk = profileCacheKey();
+        var cachedProfile = pk ? JSON.parse(localStorage.getItem(pk) || "null") : null;
+        if (cachedProfile && typeof cachedProfile === "object") {
+          Object.keys(userProfile).forEach(function (k) {
+            if (cachedProfile[k] !== undefined && cachedProfile[k] !== null) {
+              userProfile[k] = cachedProfile[k];
+            }
+          });
+          if (cachedProfile.ai_learned_fields) {
+            userProfile.ai_learned_fields = cachedProfile.ai_learned_fields;
+          }
+        }
+      } catch (e) { }
+
+      // When a JWT becomes available, refresh from the authoritative backend
+      // state so learned preferences reflect the latest evolve_profile output.
+      function syncProfileFromBackend() {
+        FoodAuth.apiCall("/function/get_profile", {}, true).then(function (res) {
+          if (res && res.ok && res.data && res.data.result) {
+            var bp = res.data.result;
+            ["dietary_restrictions", "allergies", "cuisine_preferences",
+             "flavor_preferences", "available_equipment", "nutritional_goals",
+             "disliked_foods", "other_preferences"].forEach(function (k) {
+              if (Array.isArray(bp[k])) userProfile[k] = bp[k];
+            });
+            if (bp.cooking_skill_level) userProfile.cooking_skill_level = bp.cooking_skill_level;
+            if (bp.ai_learned_fields) userProfile.ai_learned_fields = bp.ai_learned_fields;
+            var pk = profileCacheKey();
+            if (pk) {
+              try { localStorage.setItem(pk, JSON.stringify(userProfile)); } catch (e) { }
+            }
+          }
+        }).catch(function () {});
+      }
+
+      if (FoodAuth.isAuthenticated()) {
+        if (FoodAuth.getJwt()) {
+          syncProfileFromBackend();
+        } else if (typeof FoodAuth.ready === "function") {
+          FoodAuth.ready(4000).then(function (jwt) {
+            if (jwt) syncProfileFromBackend();
+          });
+        }
+      }
+
+      function fileToBase64(file) {
+        return new Promise(function (resolve, reject) {
+          var reader = new FileReader();
+          reader.onload = function () { resolve(reader.result); };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function callQwenVL(imageBase64, userMessage, profile) {
+        // Proxy through Jac backend — API key stays server-side
+        var response = await fetch(FoodAuth.API_BASE + "/function/analyze_meal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_base64: imageBase64,
+            message: userMessage || "",
+            user_profile: profile || {}
+          })
+        });
+
+        if (!response.ok) {
+          var errText = await response.text();
+          throw new Error("Backend error (" + response.status + "): " + errText);
+        }
+
+        var envelope = await response.json();
+        if (!envelope.ok) {
+          throw new Error(envelope.error ? envelope.error.message : "Unknown backend error");
+        }
+
+        var result = envelope.data.result;
+        if (result.error) {
+          throw new Error(result.error);
+        }
+        return result;
+      }
+
+      function uniquePush(arr, value) {
+        if (!value) return;
+        if (arr.indexOf(value) === -1) arr.push(value);
+      }
+
+      function addBubble(role, text) {
+        var b = document.createElement("div");
+        b.className = "bubble " + role;
+        b.textContent = text;
+        chatBox.appendChild(b);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function addUserMessage(text) {
+        var msg = (text || "").trim();
+        if (!msg) return;
+        conversation.push({ role: "user", text: msg });
+        addBubble("user", msg);
+      }
+
+      function inferProfileFromMessage(message) {
+        var lower = message.toLowerCase();
+
+        if (lower.indexOf("italian") >= 0) uniquePush(userProfile.cuisine_preferences, "Italian");
+        if (lower.indexOf("chinese") >= 0) uniquePush(userProfile.cuisine_preferences, "Chinese");
+        if (lower.indexOf("mexican") >= 0) uniquePush(userProfile.cuisine_preferences, "Mexican");
+
+        if (lower.indexOf("sour") >= 0) uniquePush(userProfile.flavor_preferences, "sour");
+        if (lower.indexOf("salty") >= 0) uniquePush(userProfile.flavor_preferences, "salty");
+        if (lower.indexOf("spicy") >= 0) uniquePush(userProfile.flavor_preferences, "spicy");
+        if (lower.indexOf("sweet") >= 0) uniquePush(userProfile.flavor_preferences, "sweet");
+        if (lower.indexOf("savory") >= 0) uniquePush(userProfile.flavor_preferences, "savory");
+        if (lower.indexOf("mild") >= 0) uniquePush(userProfile.flavor_preferences, "mild");
+
+        if (lower.indexOf("vegan") >= 0) uniquePush(userProfile.dietary_restrictions, "vegan");
+        if (lower.indexOf("vegetarian") >= 0) uniquePush(userProfile.dietary_restrictions, "vegetarian");
+        if (lower.indexOf("gluten") >= 0) uniquePush(userProfile.dietary_restrictions, "gluten-free");
+
+        if (lower.indexOf("allergic to") >= 0) {
+          var allergyText = lower.split("allergic to")[1] || "";
+          allergyText.split(/[,.]/).forEach(function (part) {
+            var token = part.trim();
+            if (token) uniquePush(userProfile.allergies, token);
+          });
+        }
+
+        if (lower.indexOf("beginner") >= 0) userProfile.cooking_skill_level = "beginner";
+        if (lower.indexOf("intermediate") >= 0) userProfile.cooking_skill_level = "intermediate";
+        if (lower.indexOf("advanced") >= 0) userProfile.cooking_skill_level = "advanced";
+
+        if (lower.indexOf("air fryer") >= 0) uniquePush(userProfile.available_equipment, "air fryer");
+        if (lower.indexOf("oven") >= 0) uniquePush(userProfile.available_equipment, "oven");
+        if (lower.indexOf("stove") >= 0) uniquePush(userProfile.available_equipment, "stove");
+
+        if (lower.indexOf("high protein") >= 0) uniquePush(userProfile.nutritional_goals, "high-protein");
+        if (lower.indexOf("low carb") >= 0) uniquePush(userProfile.nutritional_goals, "low-carb");
+        if (lower.indexOf("weight loss") >= 0) uniquePush(userProfile.nutritional_goals, "weight-loss");
+
+        if (lower.indexOf("no ") >= 0) {
+          if (lower.indexOf("no mushroom") >= 0) uniquePush(userProfile.disliked_foods, "mushroom");
+          if (lower.indexOf("no onion") >= 0) uniquePush(userProfile.disliked_foods, "onion");
+          if (lower.indexOf("no seafood") >= 0) uniquePush(userProfile.disliked_foods, "seafood");
+        }
+
+        var minuteMatch = lower.match(/(\d{1,3})\s*(min|minute)/);
+        if (minuteMatch) {
+          var timePref = "time_limit_" + minuteMatch[1] + "min";
+          uniquePush(userProfile.other_preferences, timePref);
+        }
+      }
+
+
+      function analyzeImageMeta(file, done) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var img = new Image();
+          img.onload = function () {
+            var canvas = document.createElement("canvas");
+            var size = 32;
+            canvas.width = size;
+            canvas.height = size;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, size, size);
+            var data = ctx.getImageData(0, 0, size, size).data;
+            var total = data.length / 4;
+            var sumLight = 0;
+            var sumWarmth = 0;
+
+            for (var i = 0; i < data.length; i += 4) {
+              var r = data[i];
+              var g = data[i + 1];
+              var b = data[i + 2];
+              sumLight += (r + g + b) / 3;
+              sumWarmth += (r - b);
+            }
+
+            currentImageMeta = {
+              name: file.name || "",
+              size: file.size || 0,
+              lastModified: file.lastModified || 0,
+              width: img.width || 0,
+              height: img.height || 0,
+              brightness: Math.round(sumLight / total),
+              warmth: Math.round(sumWarmth / total)
+            };
+            done();
+          };
+          img.onerror = function () {
+            currentImageMeta = {
+              name: file.name || "",
+              size: file.size || 0,
+              lastModified: file.lastModified || 0,
+              width: 0,
+              height: 0,
+              brightness: 0,
+              warmth: 0
+            };
+            done();
+          };
+          img.src = ev.target.result;
+        };
+        reader.onerror = function () {
+          currentImageMeta = {
+            name: file.name || "",
+            size: file.size || 0,
+            lastModified: file.lastModified || 0,
+            width: 0,
+            height: 0,
+            brightness: 0,
+            warmth: 0
+          };
+          done();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function processSelectedFile(file) {
+        if (!file) return;
+        currentImageFile = file;
+        currentImageUrl = URL.createObjectURL(file);
+        leftPreviewImg.src = currentImageUrl;
+        leftPreview.classList.remove("hidden");
+        mainPreview.classList.add("hidden");
+        analysisChip.classList.add("hidden");
+        resultTopHint.classList.remove("hidden");
+        uploadBox.classList.add("has-file");
+        leftStatus.textContent = "Image loaded. Click Generate Meal Plan to show preview and output.";
+
+        analyzeImageMeta(file, function () {
+          if (pendingAutoGenerate) {
+            pendingAutoGenerate = false;
+            generateBtn.click();
+          }
+        });
+      }
+
+
+      function toTagList(values) {
+        if (!values || !values.length) {
+          return '<span class="tag-chip">None</span>';
+        }
+        return values.map(function (v) {
+          return '<span class="tag-chip">' + v + '</span>';
+        }).join('');
+      }
+
+      function renderStructuredOutput(profile, recommendation) {
+        var n = recommendation.nutrition_analysis || {};
+        var needs = n.estimated_daily_needs || {};
+        var stepsHtml = (recommendation.preparation_overview || []).map(function (step) {
+          return '<li>' + step + '</li>';
+        }).join('');
+
+        outputBox.innerHTML = [
+          '<section class="result-section">',
+          '  <h4 class="section-title">Updated User Profile</h4>',
+          '  <div class="kv-grid">',
+          '    <div class="kv-card"><div class="k">Dietary Restrictions</div><div class="tag-list">' + toTagList(profile.dietary_restrictions) + '</div></div>',
+          '    <div class="kv-card"><div class="k">Allergies</div><div class="tag-list">' + toTagList(profile.allergies) + '</div></div>',
+          '    <div class="kv-card"><div class="k">Cuisine Preferences</div><div class="tag-list">' + toTagList(profile.cuisine_preferences) + '</div></div>',
+          '    <div class="kv-card"><div class="k">Flavor Preferences</div><div class="tag-list">' + toTagList(profile.flavor_preferences) + '</div></div>',
+          '    <div class="kv-card"><div class="k">Cooking Skill</div><div>' + (profile.cooking_skill_level || 'Unknown') + '</div></div>',
+          '    <div class="kv-card"><div class="k">Available Equipment</div><div class="tag-list">' + toTagList(profile.available_equipment) + '</div></div>',
+          '  </div>',
+          '</section>',
+          '<section class="result-section">',
+          '  <h4 class="section-title">Recipe Recommendation</h4>',
+          '  <h5 class="recipe-title">' + recommendation.dish_name + '</h5>',
+          '  <p class="recipe-reason">' + recommendation.reason_for_recommendation + '</p>',
+          '  <div class="kv-grid" style="margin-top:8px;">',
+          '    <div class="kv-card"><div class="k">Key Ingredients</div><div class="tag-list">' + toTagList(recommendation.key_ingredients) + '</div></div>',
+          '    <div class="kv-card"><div class="k">Substitutions</div><div class="tag-list">' + toTagList(recommendation.substitutions) + '</div></div>',
+          '  </div>',
+          '</section>',
+          '<section class="result-section">',
+          '  <h4 class="section-title">Nutrition Analysis</h4>',
+          '  <div class="nutrition-grid">',
+          '    <div class="nutrition-box"><strong>Estimated Daily Needs</strong><br/>Calories: ' + (needs.calories || '-') + '<br/>Protein: ' + (needs.protein || '-') + '<br/>Carbs: ' + (needs.carbohydrates || '-') + '<br/>Fat: ' + (needs.fat || '-') + '<br/>Fiber: ' + (needs.fiber || '-') + '</div>',
+          '    <div class="nutrition-box"><strong>Ingredient Summary</strong><br/>' + (n.ingredient_nutrition_summary || '-') + '</div>',
+          '    <div class="nutrition-box"><strong>Balance Assessment</strong><br/>' + (n.nutritional_balance_assessment || '-') + '</div>',
+          '    <div class="nutrition-box"><strong>Suggested Improvement</strong><br/>' + (n.suggested_nutritional_improvements || '-') + '</div>',
+          '  </div>',
+          '</section>',
+          '<section class="result-section">',
+          '  <h4 class="section-title">Preparation Overview</h4>',
+          '  <ol class="steps-list">' + stepsHtml + '</ol>',
+          '</section>'
+        ].join('');
+      }
+
+
+      function setGenerating(isOn) {
+        generatingLayer.classList.toggle("hidden", !isOn);
+      }
+
+      uploadBox.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        uploadBox.classList.add("drag-over");
+      });
+
+      uploadBox.addEventListener("dragleave", function () {
+        uploadBox.classList.remove("drag-over");
+      });
+
+      uploadBox.addEventListener("drop", function (e) {
+        e.preventDefault();
+        uploadBox.classList.remove("drag-over");
+        var files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;
+        if (!files || !files.length) return;
+        processSelectedFile(files[0]);
+      });
+
+      imageInput.addEventListener("change", function () {
+        if (!imageInput.files[0]) return;
+        processSelectedFile(imageInput.files[0]);
+      });
+
+      generateBtn.addEventListener("click", async function () {
+        var typedMessage = userPrompt.value.trim();
+
+        if (typedMessage) {
+          addUserMessage(typedMessage);
+          inferProfileFromMessage(typedMessage);
+          userPrompt.value = "";
+        }
+
+        var lastMessage = null;
+        for (var i = conversation.length - 1; i >= 0; i--) {
+          if (conversation[i].role === "user") {
+            lastMessage = conversation[i].text;
+            break;
+          }
+        }
+
+        var effectiveMessage = lastMessage || "Plan a balanced meal from this uploaded image.";
+
+        if (!currentImageFile) {
+          pendingAutoGenerate = true;
+          leftStatus.textContent = "Choose an image to continue. Generation will start automatically after upload.";
+          if (typeof imageInput.showPicker === "function") {
+            imageInput.showPicker();
+          } else {
+            imageInput.click();
+          }
+          return;
+        }
+
+        leftStatus.textContent = "Loading meal history...";
+        generateBtn.classList.add("loading");
+        generateBtn.textContent = "Generating...";
+
+        // If logged in but JWT hasn't landed yet (post-login race), wait briefly.
+        if (FoodAuth.isAuthenticated() && !FoodAuth.getJwt() && typeof FoodAuth.ready === "function") {
+          try { await FoodAuth.ready(2500); } catch (e) { }
+        }
+
+        // Fetch recent meal history and build summary for context. Also reused for evolve_profile below.
+        var historySummary = "";
+        var allMeals = [];
+        if (FoodAuth.getJwt()) {
+          try {
+            var mealsRes = await FoodAuth.apiCall("/function/get_meals", {}, true);
+            if (mealsRes && mealsRes.ok && mealsRes.data && mealsRes.data.result) {
+              allMeals = mealsRes.data.result;
+              var cutoff = new Date();
+              cutoff.setDate(cutoff.getDate() - 14);
+              var recent = allMeals.filter(function (m) {
+                return m.created_at && new Date(m.created_at) >= cutoff;
+              });
+              if (recent.length > 0) {
+                var lines = recent.map(function (m) {
+                  var date = m.created_at.split("T")[0] || m.created_at.split(" ")[0];
+                  var ings = (m.key_ingredients || []).join(", ");
+                  return "- " + date + ": " + m.dish_name + (ings ? " (" + ings + ")" : "");
+                });
+                // Count cuisine patterns
+                var cuisineCounts = {};
+                recent.forEach(function (m) {
+                  var name = (m.dish_name || "").toLowerCase();
+                  ["korean", "italian", "chinese", "japanese", "mexican", "thai", "indian", "american"].forEach(function (c) {
+                    if (name.indexOf(c) >= 0) cuisineCounts[c] = (cuisineCounts[c] || 0) + 1;
+                  });
+                });
+                var patterns = Object.keys(cuisineCounts).map(function (c) {
+                  return c + " x" + cuisineCounts[c];
+                }).join(", ");
+                historySummary = "Recent meals (last 14 days):\n" + lines.join("\n");
+                if (patterns) historySummary += "\nCuisine patterns: " + patterns;
+                historySummary += "\nTotal: " + recent.length + " meals";
+              }
+            }
+          } catch (e) { console.warn("Could not fetch meal history:", e); }
+        }
+
+        // Re-hydrate from localStorage so edits made on the Profile page
+        // (or in another tab) flow into the Qwen prompt.
+        try {
+          var pk = profileCacheKey();
+          var raw = pk ? localStorage.getItem(pk) : null;
+          if (raw) {
+            var cached = JSON.parse(raw);
+            Object.keys(userProfile).forEach(function (k) {
+              if (Array.isArray(cached[k]) || typeof cached[k] === "string") {
+                userProfile[k] = cached[k];
+              }
+            });
+            if (cached.ai_learned_fields) userProfile.ai_learned_fields = cached.ai_learned_fields;
+          }
+        } catch (e) {}
+
+        // Attach history to profile for the AI
+        var profileWithHistory = JSON.parse(JSON.stringify(userProfile));
+        if (historySummary) {
+          profileWithHistory.meal_history_summary = historySummary;
+        }
+
+        leftStatus.textContent = "Calling Qwen3-VL-32B...";
+        addBubble("assistant", historySummary ? "Analyzing image with your meal history context..." : "Analyzing your image...");
+
+        // Step 1: Immediately reveal the uploaded picture in the result-top section
+        if (currentImageUrl) {
+          mainPreview.src = currentImageUrl;
+          mainPreview.classList.remove("hidden");
+          analysisChip.textContent = "AI Analysis";
+          analysisChip.classList.remove("hidden");
+          resultTopHint.classList.add("hidden");
+          document.querySelector('.result-top').classList.add('result-top-reveal');
+        }
+
+        // Step 2: Show generating animation in the output section
+        outputBox.innerHTML = [
+          '<div class="output-generating">',
+          '  <div class="spinner"></div>',
+          '  <div class="gen-label">Generating<span class="dots"></span></div>',
+          '  <div class="gen-sub">Sending image to Qwen3-VL-32B for real-time analysis and personalized meal planning...</div>',
+          '  <div class="skeleton-lines">',
+          '    <span></span><span></span><span></span><span></span>',
+          '  </div>',
+          '</div>'
+        ].join('');
+
+        // Step 3: Call the real Qwen3-VL-32B model
+        try {
+          var imageBase64 = await fileToBase64(currentImageFile);
+          var result = await callQwenVL(imageBase64, effectiveMessage, profileWithHistory);
+
+          // Update user profile from AI response
+          if (result.updated_user_profile) {
+            var aiProfile = result.updated_user_profile;
+            if (aiProfile.dietary_restrictions && aiProfile.dietary_restrictions.length) userProfile.dietary_restrictions = aiProfile.dietary_restrictions;
+            if (aiProfile.allergies && aiProfile.allergies.length) userProfile.allergies = aiProfile.allergies;
+            if (aiProfile.cuisine_preferences && aiProfile.cuisine_preferences.length) userProfile.cuisine_preferences = aiProfile.cuisine_preferences;
+            if (aiProfile.flavor_preferences && aiProfile.flavor_preferences.length) userProfile.flavor_preferences = aiProfile.flavor_preferences;
+            if (aiProfile.cooking_skill_level) userProfile.cooking_skill_level = aiProfile.cooking_skill_level;
+            if (aiProfile.available_equipment && aiProfile.available_equipment.length) userProfile.available_equipment = aiProfile.available_equipment;
+            if (aiProfile.nutritional_goals && aiProfile.nutritional_goals.length) userProfile.nutritional_goals = aiProfile.nutritional_goals;
+            if (aiProfile.disliked_foods && aiProfile.disliked_foods.length) userProfile.disliked_foods = aiProfile.disliked_foods;
+          }
+
+          var recommendation = result.recommendation || {};
+          renderStructuredOutput(userProfile, recommendation);
+
+          // Persist updated userProfile (per-account) so the Profile page can display it
+          var _pkGen = profileCacheKey();
+          if (_pkGen) { try { localStorage.setItem(_pkGen, JSON.stringify(userProfile)); } catch (e) { } }
+
+          resultCard.classList.remove("reveal-pop");
+          void resultCard.offsetWidth;
+          resultCard.classList.add("reveal-pop");
+
+          addBubble("assistant", "Meal plan generated. You can update your preferences and generate again.");
+          leftStatus.textContent = "Done. Saving meal and learning from your history...";
+
+          // Save meal and evolve profile in background (non-blocking)
+          if (FoodAuth.getJwt()) {
+            // Save the meal entry
+            FoodAuth.apiCall("/function/save_meal", {
+              dish_name: recommendation.dish_name || "",
+              reason: recommendation.reason_for_recommendation || "",
+              key_ingredients: recommendation.key_ingredients || [],
+              substitutions: recommendation.substitutions || [],
+              nutrition_analysis: recommendation.nutrition_analysis || {},
+              preparation_overview: recommendation.preparation_overview || [],
+              user_message: effectiveMessage
+            }, true).catch(function (e) { console.warn("save_meal failed:", e); });
+
+            // Evolve profile based on meal history patterns.
+            // Reuse allMeals already fetched earlier and include the just-generated meal so the AI sees it.
+            var evolveMeals = (allMeals || []).slice();
+            evolveMeals.push({
+              dish_name: recommendation.dish_name || "",
+              reason: recommendation.reason_for_recommendation || "",
+              key_ingredients: recommendation.key_ingredients || [],
+              user_message: effectiveMessage,
+              created_at: new Date().toISOString()
+            });
+
+            FoodAuth.apiCall("/function/evolve_profile", {
+              current_profile: userProfile,
+              recent_meals: evolveMeals
+            }, true).then(function (res) {
+              if (res && res.ok && res.data && res.data.result && res.data.result.evolved) {
+                var evolved = res.data.result;
+                var newProfile = evolved.profile || {};
+                // Backend has already union-deduped and persisted to the graph;
+                // just mirror the authoritative profile into local state.
+                ["dietary_restrictions", "allergies", "cuisine_preferences",
+                 "flavor_preferences", "available_equipment", "nutritional_goals",
+                 "disliked_foods", "other_preferences"].forEach(function (k) {
+                  if (Array.isArray(newProfile[k])) userProfile[k] = newProfile[k];
+                });
+                if (newProfile.cooking_skill_level) userProfile.cooking_skill_level = newProfile.cooking_skill_level;
+                userProfile.ai_learned_fields = newProfile.ai_learned_fields || evolved.learned_fields || [];
+                var _pkEvo = profileCacheKey();
+                if (_pkEvo) { try { localStorage.setItem(_pkEvo, JSON.stringify(userProfile)); } catch (e) { } }
+                var changed = Object.keys(evolved.changes || {}).join(", ");
+                addBubble("assistant", "Profile updated" + (changed ? " (" + changed + ")" : "") + ": learned from your meal patterns.");
+                leftStatus.textContent = "Done. Profile evolved from your history.";
+              } else {
+                var reason = res && res.data && res.data.result && res.data.result.reason;
+                leftStatus.textContent = "Done." + (reason ? " (" + reason + ")" : "");
+              }
+            }).catch(function (e) {
+              console.warn("evolve_profile failed:", e);
+              leftStatus.textContent = "Done.";
+            });
+          } else {
+            leftStatus.textContent = "Done.";
+          }
+        } catch (err) {
+          console.error("Qwen3-VL API error:", err);
+          outputBox.innerHTML = '<div class="empty-output"><div><strong style="display:block; margin-bottom:6px;">Generation Failed</strong><span>' + err.message + '</span></div></div>';
+          addBubble("assistant", "Error: " + err.message);
+          leftStatus.textContent = "Error calling Qwen3-VL-32B. Check console for details.";
+        }
+
+        generateBtn.classList.remove("loading");
+        generateBtn.textContent = "Generate Meal Plan";
+      });
+
+      if (authBinding && typeof authBinding.refresh === "function") {
+        authBinding.refresh();
+      }
+
+      var magneticCards = document.querySelectorAll(".magnetic-card");
+      magneticCards.forEach(function (card) {
+        card.addEventListener("mousemove", function (e) {
+          var rect = card.getBoundingClientRect();
+          var x = (e.clientX - rect.left) / rect.width;
+          var y = (e.clientY - rect.top) / rect.height;
+          var rx = (0.5 - y) * 4;
+          var ry = (x - 0.5) * 4;
+          card.style.transform = "perspective(700px) rotateX(" + rx.toFixed(2) + "deg) rotateY(" + ry.toFixed(2) + "deg)";
+        });
+
+        card.addEventListener("mouseleave", function () {
+          card.style.transform = "";
+        });
+      });
+
+      leftStatus.textContent = "Ready. Upload an image and add your cooking request.";
+    })();
+  </script>
+</body>
+
+</html>

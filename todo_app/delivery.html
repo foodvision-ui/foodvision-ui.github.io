@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoodVision AI | Delivery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="theme.css" />
+  <style>
+    .toolbar { display:grid; grid-template-columns: 1fr auto auto auto; gap: 10px; }
+    .restaurant-card { transition: transform .2s ease, box-shadow .2s ease; }
+    .restaurant-card:hover { transform: translateY(-2px); box-shadow: 0 15px 28px rgba(80,40,20,.16); }
+    .meta { display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:.9rem; }
+    .detail-row { margin-top:6px; font-size:.84rem; color:var(--muted); line-height:1.5; }
+    .detail-row a { color:#c95a20; text-decoration:none; font-weight:600; }
+    .detail-row a:hover { text-decoration:underline; }
+    .tags { display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; }
+    .tag { padding: 5px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; background: #fff2e9; color: #8a4f2f; }
+    .tag.popular { background:#ffe8ef; color:#b12b57; }
+    .tag.fast { background:#e8f4ff; color:#1a6fb5; }
+    .tag.cuisine-tag { background:#f3e8ff; color:#6b21a8; }
+    .empty { text-align:center; color: var(--muted); padding: 25px; }
+    .loading-bar { text-align:center; padding:30px; color:var(--muted); }
+    .loading-bar .spinner { width:36px; height:36px; border-radius:50%; border:3px solid rgba(255,159,67,.28); border-top-color:#ff6633; animation:spin .9s linear infinite; margin:0 auto 10px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .source-badge { display:inline-block; padding:3px 8px; border-radius:999px; font-size:.72rem; font-weight:700; margin-left:6px; }
+    .source-badge.live { background:#e8fff3; color:#197d49; }
+    .source-badge.cached { background:#fff8e1; color:#b58a1a; }
+    .source-badge.static { background:#fee; color:#b12b57; }
+    .stats-row { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:8px; font-size:.88rem; color:var(--muted); }
+    .loc-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:.78rem; font-weight:700; }
+    .loc-badge.gps { background:#e8fff3; color:#197d49; }
+    .loc-badge.default { background:#fff8e1; color:#b58a1a; }
+    .loc-badge.error { background:#fee; color:#b12b57; }
+    .loc-badge .pulse { width:8px; height:8px; border-radius:50%; background:currentColor; animation:locPulse 1.5s ease-in-out infinite; }
+    @keyframes locPulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+  </style>
+</head>
+<body>
+  <div class="bg-orbs" aria-hidden="true"><div class="orb"></div><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+
+  <div class="page">
+    <header class="topbar">
+      <div class="brand"><div class="brand-badge">🛵</div><div>Delivery Hub</div></div>
+      <nav class="nav-links">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="calories.html">Planner</a>
+        <a class="nav-link" href="profile.html">Profile</a>
+        <a class="nav-link active" href="delivery.html">Delivery</a>
+      </nav>
+      <button id="topAuthBtn" class="ghost-btn">Sign Up / Login</button>
+    </header>
+
+    <section class="panel">
+      <h2 style="margin-bottom:10px;">Find Food in Ann Arbor <span id="sourceBadge" class="source-badge"></span></h2>
+      <div class="toolbar">
+        <input id="searchInput" class="input" placeholder="Search restaurant, cuisine, or address..." />
+        <select id="filterCuisine">
+          <option value="all">All Cuisines</option>
+        </select>
+        <select id="filterTag">
+          <option value="all">All</option>
+          <option value="fast delivery">Fast Delivery</option>
+          <option value="popular">Popular</option>
+        </select>
+        <button id="refreshBtn" class="ghost-btn" title="Refresh from OpenStreetMap">Refresh</button>
+      </div>
+      <div id="statsRow" class="stats-row"></div>
+      <div id="locationRow" class="stats-row" style="margin-top:4px;"></div>
+    </section>
+
+    <section class="panel">
+      <div id="loadingBar" class="loading-bar">
+        <div class="spinner"></div>
+        <div>Loading real-time restaurant data from OpenStreetMap...</div>
+      </div>
+      <div id="restaurantList" class="grid grid-2"></div>
+      <div id="emptyState" class="empty hidden">No restaurants matched your search.</div>
+    </section>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="login-modal.js"></script>
+  <script src="database.js"></script>
+  <script>
+    (function () {
+      var listEl = document.getElementById("restaurantList");
+      var emptyState = document.getElementById("emptyState");
+      var loadingBar = document.getElementById("loadingBar");
+      var searchInput = document.getElementById("searchInput");
+      var filterCuisine = document.getElementById("filterCuisine");
+      var filterTag = document.getElementById("filterTag");
+      var refreshBtn = document.getElementById("refreshBtn");
+      var sourceBadge = document.getElementById("sourceBadge");
+      var statsRow = document.getElementById("statsRow");
+      var locationRow = document.getElementById("locationRow");
+      var authBinding = FoodAuth.wireTopbarAuth("topAuthBtn");
+
+      FoodAuth.showNoHistoryPopup();
+
+      function escHtml(s) {
+        var d = document.createElement("div");
+        d.textContent = s || "";
+        return d.innerHTML;
+      }
+
+      function tagClass(tag) {
+        if (tag === "popular") return "tag popular";
+        if (tag === "fast delivery") return "tag fast";
+        return "tag";
+      }
+
+      function buildCuisineFilter(restaurants) {
+        var cuisines = {};
+        restaurants.forEach(function (r) {
+          if (r.category) cuisines[r.category] = (cuisines[r.category] || 0) + 1;
+        });
+        var sorted = Object.keys(cuisines).sort();
+        filterCuisine.innerHTML = '<option value="all">All Cuisines (' + restaurants.length + ')</option>';
+        sorted.forEach(function (c) {
+          var opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c + " (" + cuisines[c] + ")";
+          filterCuisine.appendChild(opt);
+        });
+      }
+
+      function render() {
+        var q = (searchInput.value || "").trim().toLowerCase();
+        var cuisine = filterCuisine.value;
+        var t = filterTag.value;
+
+        var rows = RESTAURANTS.filter(function (r) {
+          var searchHit = !q ||
+            r.name.toLowerCase().indexOf(q) >= 0 ||
+            r.category.toLowerCase().indexOf(q) >= 0 ||
+            (r.address && r.address.toLowerCase().indexOf(q) >= 0) ||
+            (r.osm_cuisine && r.osm_cuisine.toLowerCase().indexOf(q) >= 0);
+          var cuisineHit = cuisine === "all" || r.category === cuisine;
+          var tagHit = t === "all" || (r.tags && r.tags.indexOf(t) >= 0);
+          return searchHit && cuisineHit && tagHit;
+        });
+
+        statsRow.textContent = "Showing " + rows.length + " of " + RESTAURANTS.length + " restaurants";
+
+        if (!rows.length) {
+          listEl.innerHTML = "";
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+        listEl.innerHTML = rows.map(function (r) {
+          var tags = (r.tags || []).map(function (tag) {
+            return '<span class="' + tagClass(tag) + '">' + escHtml(tag) + '</span>';
+          }).join("");
+          tags += '<span class="tag cuisine-tag">' + escHtml(r.category) + '</span>';
+
+          var detailParts = [];
+          if (r.address) detailParts.push("📍 " + escHtml(r.address));
+          if (r.phone) detailParts.push("📞 " + escHtml(r.phone));
+          if (r.opening_hours) detailParts.push("🕐 " + escHtml(r.opening_hours));
+          var detailHtml = detailParts.length
+            ? '<div class="detail-row">' + detailParts.join(" &nbsp;·&nbsp; ") + '</div>'
+            : '';
+
+          var websiteHtml = r.website
+            ? '<div class="detail-row"><a href="' + escHtml(r.website) + '" target="_blank" rel="noopener">Visit website ↗</a></div>'
+            : '';
+
+          var ratingHtml = r.rating ? '⭐ ' + r.rating : '';
+
+          return '<article class="card restaurant-card">' +
+            '<h3 style="margin:0 0 6px;">' + escHtml(r.name) + '</h3>' +
+            '<div class="meta">' +
+              (ratingHtml ? '<span>' + ratingHtml + '</span>' : '') +
+              '<span>📏 ' + escHtml(r.distance) + '</span>' +
+              '<span>🚴 ' + escHtml(r.delivery_time) + '</span>' +
+            '</div>' +
+            detailHtml +
+            websiteHtml +
+            '<div class="tags">' + tags + '</div>' +
+          '</article>';
+        }).join("");
+      }
+
+      function initWithData() {
+        loadingBar.style.display = "none";
+        buildCuisineFilter(RESTAURANTS);
+        render();
+
+        // Detect source
+        var cached = null;
+        try { cached = JSON.parse(localStorage.getItem("foodvision.restaurants.cache")); } catch(e) {}
+        if (cached && cached.data === RESTAURANTS) {
+          sourceBadge.textContent = "Cached";
+          sourceBadge.className = "source-badge cached";
+        } else if (RESTAURANTS.length > 15) {
+          sourceBadge.textContent = "Live · OpenStreetMap";
+          sourceBadge.className = "source-badge live";
+        } else {
+          sourceBadge.textContent = "Fallback";
+          sourceBadge.className = "source-badge static";
+        }
+      }
+
+      searchInput.addEventListener("input", render);
+      filterCuisine.addEventListener("change", render);
+      filterTag.addEventListener("change", render);
+
+      refreshBtn.addEventListener("click", function () {
+        try { localStorage.removeItem("foodvision.restaurants.cache"); } catch(e) {}
+        loadingBar.style.display = "block";
+        listEl.innerHTML = "";
+        RESTAURANTS = [];
+        RESTAURANTS_LOADED = false;
+        _fetchFromOverpass(false);
+        onRestaurantsReady(function () {
+          initWithData();
+          sourceBadge.textContent = "Live · OpenStreetMap";
+          sourceBadge.className = "source-badge live";
+        });
+      });
+
+      if (authBinding && typeof authBinding.refresh === "function") {
+        authBinding.refresh();
+      }
+
+      function updateLocationBadge(info) {
+        if (info.source === "gps") {
+          locationRow.innerHTML = '<span class="loc-badge gps"><span class="pulse"></span> Your location: ' +
+            info.lat.toFixed(4) + ', ' + info.lon.toFixed(4) + '</span> Distances sorted from you';
+        } else if (info.source === "error") {
+          locationRow.innerHTML = '<span class="loc-badge error">Location unavailable</span> Distances from UM campus center';
+        } else {
+          locationRow.innerHTML = '<span class="loc-badge default"><span class="pulse"></span> Locating...</span>';
+        }
+      }
+
+      // Show "locating" initially
+      locationRow.innerHTML = '<span class="loc-badge default"><span class="pulse"></span> Locating you...</span>';
+
+      // When GPS arrives, recalculate and re-render
+      onLocationReady(function (info) {
+        updateLocationBadge(info);
+        if (info.source === "gps" && RESTAURANTS_LOADED) {
+          _recalcDistances();
+          buildCuisineFilter(RESTAURANTS);
+          render();
+        }
+      });
+
+      // Wait for async restaurant data
+      onRestaurantsReady(function (data) {
+        initWithData();
+        // If GPS already arrived before restaurants loaded, recalc now
+        if (USER_LOCATION_SOURCE === "gps") {
+          _recalcDistances();
+          render();
+          updateLocationBadge({ lat: REF_LAT, lon: REF_LON, source: "gps" });
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

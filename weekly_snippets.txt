@@ -1,0 +1,38 @@
+Weekly Snippets — Week of 2026-04-17
+
+
+1. What did you build, change, or validate this week?
+
+This week we ran a full code review on last week's adaptive meal recommendation feature and then fixed the issues that came out of it. The feature works start to finish now, tested against the real Qwen3-VL-32B API.
+
+Most of the fixes were on the backend in main.jac. The big one was rewriting the evolve_profile merge logic. The old version did merged[k] = updates[k], so when the AI returned {"cuisine_preferences": ["Korean"]} it would wipe out the user's existing ["Italian"]. We replaced that with a case-insensitive union-dedupe for list fields, and for scalar fields we only fill them when they're empty. At the same time we tightened evolve_profile from def:pub to def:priv so it now requires a JWT, added an ai_learned_fields list to the UserProfile node to track which fields came from the AI, and made update_profile remove a field from that list when the user manually edits it (so the badge goes away after a manual override). We also made evolve_profile write the merged profile directly to the graph, so the frontend doesn't have to fire a second update_profile call afterwards, and we sort meal history by created_at before taking the last 20 entries.
+
+On the frontend, calories.html now sends the JWT with evolve_profile through FoodAuth.apiCall instead of a raw fetch, fetches get_meals once per Generate click (the old code called it twice), and appends the just-generated meal into the evolve input so the AI can see it. The frontend stopped doing its own merge, since the backend is authoritative. profile.html reads the ai_learned_fields array from the backend profile to decide which preferences get the "AI learned" badge, replacing the fragile default-diff heuristic. In helpers.py we added a flat-dict regex fallback to safe_parse_json, because the old attempt-4 only matched analyze_meal responses (it keyed on dish_name) and left evolve_profile unprotected if JSON parsing collapsed.
+
+For validation, we registered a fresh user, called evolve_profile with current_profile={"cuisine_preferences":["Italian"]} and three Korean meals, and the response came back with cuisine_preferences=["Italian","Korean"] and ai_learned_fields=["cuisine_preferences","flavor_preferences"]. Italian survived, Korean got added, provenance was tracked. We also verified that an unauthed POST to /function/evolve_profile returns 401 and that an empty-meals call short-circuits without hitting the AI.
+
+
+2. What new capability or insight do you have now that you did not have last week?
+
+The loop is actually closed now. Last week we could generate meals with history context and save them, but we hadn't demonstrated that a fresh page load in a new session would show the learned preferences correctly. This week we have. The profile page reads the authoritative state from the backend and surfaces which fields were AI-learned, so re-logging shows the same thing as the session that did the learning.
+
+The main insight is about Jac's type checker. It prints E1032 "Type is Unknown, cannot access attribute" errors for basically every Python interop point, including requests.Response.json() and any node attribute access like p.cuisine_preferences, because it can't resolve the dynamic types. These errors look alarming under jac check but jac start runs fine and the endpoints behave correctly, so we've stopped treating jac check output as a release gate and rely on runtime smoke tests instead. We also learned that Jac nodes don't support dynamic setattr the way Python classes do, which meant we had to expand our loop over field names into explicit p.<field> = merged[<field>] lines.
+
+
+3. What was the biggest challenge or uncertainty you encountered?
+
+The array-overwrite bug was the most subtle thing we hit. The prompt to Qwen3-VL said "do not remove existing preferences, only add," and the model mostly complied by returning just the new items. But our backend merge wrote those new items straight into the profile dict, so "only the new items" turned into "only the new items remain." A user with Italian as their preference would lose it the first time the AI suggested Korean. What made it hard to notice is that last week's demo looked correct, because the test user started empty and overwriting an empty list with a new list looks the same as appending. The bug only surfaced once we tested with a pre-existing profile. We fixed it by doing the union on the backend explicitly and by also telling the model to return just the new items, so the frontend and backend agree on the semantics.
+
+A secondary issue was the "AI learned" badge logic. The original version inferred learned-vs-manual by diffing against a default profile, which was wrong in both directions: a user who manually set something to match a default looked unlearned, and a user who manually changed a value away from defaults looked AI-learned. We replaced the heuristic with explicit provenance on the node. Both issues are resolved.
+
+
+4. What key decision did you make this week, and why?
+
+The main decision was where to put the merge logic. We moved it into the backend instead of splitting it between backend and frontend. The tradeoff is that the frontend becomes a thin mirror of whatever the backend returns, which concentrates a bit of logic in one place. The payoff is that get_profile from a cold page load returns correct state, including the ai_learned_fields. If we had kept the merge in the frontend, the graph would have drifted out of sync with localStorage and the profile page would have shown different things depending on which tab you came from.
+
+The second decision was tightening evolve_profile from def:pub to def:priv. We had kept it public last week partly for easier testing, but this week we decided the quota-abuse risk outweighed the convenience. save_meal and get_meals already require auth, forcing evolve_profile to match them keeps the API consistent, and testing with a JWT is a one-line change.
+
+
+5. What is your next concrete milestone before the next submission?
+
+The next milestone is recording a short screen capture of the full end-to-end flow for the submission. We want to register a fresh account, generate three meal plans with a clear cuisine theme like Korean, then generate a fourth plan with no cuisine hint in the prompt, and show that the fourth suggestion leans Korean and that profile.html displays the "AI learned" badge on cuisine_preferences. To prove backend persistence, we'll also log out, log back in, and show the badges are still there. This is verifiable: either the badge shows up on the reloaded profile page or it doesn't.
