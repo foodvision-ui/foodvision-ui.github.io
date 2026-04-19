@@ -680,9 +680,9 @@
       </div>
       <nav class="nav-links">
         <a class="nav-link" href="index.html">Home</a>
-        <a class="nav-link" href="delivery.html">Delivery</a>
         <a class="nav-link active" href="calories.html">Planner</a>
         <a class="nav-link" href="profile.html">Profile</a>
+        <a class="nav-link" href="delivery.html">Delivery</a>
       </nav>
       <button id="topAuthBtn" class="ghost-btn">Sign Up / Login</button>
     </header>
@@ -783,6 +783,61 @@
         nutritional_goals: [],
         other_preferences: []
       };
+
+      // Per-account cache key — prevents one user's preferences from leaking
+      // into another user's view on the same browser.
+      function profileCacheKey() {
+        return FoodAuth.scopedKey("foodvision.userProfile");
+      }
+
+      // Hydrate userProfile from the last-saved cache so repeat sessions
+      // don't lose learned preferences before the backend fetch lands.
+      // Only read a cache that belongs to the CURRENT signed-in user.
+      try {
+        var pk = profileCacheKey();
+        var cachedProfile = pk ? JSON.parse(localStorage.getItem(pk) || "null") : null;
+        if (cachedProfile && typeof cachedProfile === "object") {
+          Object.keys(userProfile).forEach(function (k) {
+            if (cachedProfile[k] !== undefined && cachedProfile[k] !== null) {
+              userProfile[k] = cachedProfile[k];
+            }
+          });
+          if (cachedProfile.ai_learned_fields) {
+            userProfile.ai_learned_fields = cachedProfile.ai_learned_fields;
+          }
+        }
+      } catch (e) { }
+
+      // When a JWT becomes available, refresh from the authoritative backend
+      // state so learned preferences reflect the latest evolve_profile output.
+      function syncProfileFromBackend() {
+        FoodAuth.apiCall("/function/get_profile", {}, true).then(function (res) {
+          if (res && res.ok && res.data && res.data.result) {
+            var bp = res.data.result;
+            ["dietary_restrictions", "allergies", "cuisine_preferences",
+             "flavor_preferences", "available_equipment", "nutritional_goals",
+             "disliked_foods", "other_preferences"].forEach(function (k) {
+              if (Array.isArray(bp[k])) userProfile[k] = bp[k];
+            });
+            if (bp.cooking_skill_level) userProfile.cooking_skill_level = bp.cooking_skill_level;
+            if (bp.ai_learned_fields) userProfile.ai_learned_fields = bp.ai_learned_fields;
+            var pk = profileCacheKey();
+            if (pk) {
+              try { localStorage.setItem(pk, JSON.stringify(userProfile)); } catch (e) { }
+            }
+          }
+        }).catch(function () {});
+      }
+
+      if (FoodAuth.isAuthenticated()) {
+        if (FoodAuth.getJwt()) {
+          syncProfileFromBackend();
+        } else if (typeof FoodAuth.ready === "function") {
+          FoodAuth.ready(4000).then(function (jwt) {
+            if (jwt) syncProfileFromBackend();
+          });
+        }
+      }
 
       function fileToBase64(file) {
         return new Promise(function (resolve, reject) {
@@ -1093,6 +1148,11 @@
         generateBtn.classList.add("loading");
         generateBtn.textContent = "Generating...";
 
+        // If logged in but JWT hasn't landed yet (post-login race), wait briefly.
+        if (FoodAuth.isAuthenticated() && !FoodAuth.getJwt() && typeof FoodAuth.ready === "function") {
+          try { await FoodAuth.ready(2500); } catch (e) { }
+        }
+
         // Fetch recent meal history and build summary for context. Also reused for evolve_profile below.
         var historySummary = "";
         var allMeals = [];
@@ -1130,6 +1190,22 @@
             }
           } catch (e) { console.warn("Could not fetch meal history:", e); }
         }
+
+        // Re-hydrate from localStorage so edits made on the Profile page
+        // (or in another tab) flow into the Qwen prompt.
+        try {
+          var pk = profileCacheKey();
+          var raw = pk ? localStorage.getItem(pk) : null;
+          if (raw) {
+            var cached = JSON.parse(raw);
+            Object.keys(userProfile).forEach(function (k) {
+              if (Array.isArray(cached[k]) || typeof cached[k] === "string") {
+                userProfile[k] = cached[k];
+              }
+            });
+            if (cached.ai_learned_fields) userProfile.ai_learned_fields = cached.ai_learned_fields;
+          }
+        } catch (e) {}
 
         // Attach history to profile for the AI
         var profileWithHistory = JSON.parse(JSON.stringify(userProfile));
@@ -1183,8 +1259,9 @@
           var recommendation = result.recommendation || {};
           renderStructuredOutput(userProfile, recommendation);
 
-          // Persist updated userProfile so the Profile page can display it
-          try { localStorage.setItem("foodvision.userProfile", JSON.stringify(userProfile)); } catch (e) { }
+          // Persist updated userProfile (per-account) so the Profile page can display it
+          var _pkGen = profileCacheKey();
+          if (_pkGen) { try { localStorage.setItem(_pkGen, JSON.stringify(userProfile)); } catch (e) { } }
 
           resultCard.classList.remove("reveal-pop");
           void resultCard.offsetWidth;
@@ -1233,7 +1310,8 @@
                 });
                 if (newProfile.cooking_skill_level) userProfile.cooking_skill_level = newProfile.cooking_skill_level;
                 userProfile.ai_learned_fields = newProfile.ai_learned_fields || evolved.learned_fields || [];
-                try { localStorage.setItem("foodvision.userProfile", JSON.stringify(userProfile)); } catch (e) { }
+                var _pkEvo = profileCacheKey();
+                if (_pkEvo) { try { localStorage.setItem(_pkEvo, JSON.stringify(userProfile)); } catch (e) { } }
                 var changed = Object.keys(evolved.changes || {}).join(", ");
                 addBubble("assistant", "Profile updated" + (changed ? " (" + changed + ")" : "") + ": learned from your meal patterns.");
                 leftStatus.textContent = "Done. Profile evolved from your history.";

@@ -385,7 +385,7 @@
         <div>
           <div class="badge">✨ Image-to-Recipe Assistant</div>
           <h1 class="hero-title">Log in and turn photos into personalized recipes.</h1>
-          <p class="hero-copy">Phone OTP, email password, and guest mode are all supported. In this template, all features are available to guests and outputs are demo-only.</p>
+          <p class="hero-copy">Email or guest mode — pick one and jump in. All features are open in this demo.</p>
           <div class="chips">
             <span class="chip">Food Recognition</span>
             <span class="chip">Recipe Generation</span>
@@ -403,12 +403,7 @@
 
       <section class="panel">
         <h2 style="margin:0;">Welcome Back</h2>
-        <p style="margin:8px 0 12px; color:var(--muted);">Choose your login method.</p>
-
-        <div class="switcher" role="tablist" aria-label="Login mode">
-          <button id="tab-email" class="active" type="button">Email</button>
-          <button id="tab-phone" type="button">Phone OTP</button>
-        </div>
+        <p style="margin:8px 0 12px; color:var(--muted);">Sign in with email, or jump in as a guest.</p>
 
         <form id="email-form" novalidate>
           <div class="field">
@@ -426,27 +421,12 @@
             <label class="remember"><input id="rememberEmail" type="checkbox" /> Remember me</label>
             <a href="#" onclick="return false;" style="color:#8a4f2f; font-weight:600;">Forgot password?</a>
           </div>
-          <button class="submit-btn" type="submit" style="width:100%;">Login with Email</button>
-        </form>
-
-        <form id="phone-form" class="hidden" novalidate>
-          <div class="field">
-            <label for="phone">Phone Number</label>
-            <div class="otp-row">
-              <input class="input" id="phone" type="tel" placeholder="e.g. +1 734 555 8899" required />
-              <button class="otp-btn" id="sendCodeBtn" type="button">Send Code</button>
-            </div>
-          </div>
-          <div class="field">
-            <label for="otp">Verification Code</label>
-            <input class="input" id="otp" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code" required />
-          </div>
-          <button class="submit-btn" type="submit" style="width:100%;">Verify & Login</button>
+          <button class="submit-btn" id="emailSubmit" type="submit" style="width:100%;">Login with Email</button>
         </form>
 
         <button class="guest-btn" id="guestBtn" type="button">Continue as Guest</button>
         <div id="status" class="status" role="status" aria-live="polite"></div>
-        <p class="small-note">OTP is simulated for demo. You will see a verification message on this page.</p>
+        <p class="small-note">Your session persists across browser tabs — log in once, preferences stay.</p>
       </section>
     </section>
   </main>
@@ -459,18 +439,13 @@
       var statusEl = document.getElementById("status");
 
       var emailForm = document.getElementById("email-form");
-      var phoneForm = document.getElementById("phone-form");
-      var tabEmail = document.getElementById("tab-email");
-      var tabPhone = document.getElementById("tab-phone");
+      var emailSubmit = document.getElementById("emailSubmit");
 
       var emailInput = document.getElementById("email");
       var passwordInput = document.getElementById("password");
       var rememberEmail = document.getElementById("rememberEmail");
       var togglePassword = document.getElementById("togglePassword");
 
-      var phoneInput = document.getElementById("phone");
-      var otpInput = document.getElementById("otp");
-      var sendCodeBtn = document.getElementById("sendCodeBtn");
       var guestBtn = document.getElementById("guestBtn");
 
       var REMEMBER_KEY = "foodvision.login.rememberEmail";
@@ -478,15 +453,6 @@
       function setStatus(message, type) {
         statusEl.textContent = message || "";
         statusEl.className = "status" + (type ? " " + type : "");
-      }
-
-      // In demo mode, any input is accepted and a temporary session is created.
-      function validEmail(v) {
-        return true;
-      }
-
-      function validPhone(v) {
-        return true;
       }
 
       function targetUrl() {
@@ -512,60 +478,44 @@
         window.location.href = next;
       }
 
-      function switchMode(mode) {
-        var email = mode === "email";
-        tabEmail.classList.toggle("active", email);
-        tabPhone.classList.toggle("active", !email);
-        emailForm.classList.toggle("hidden", !email);
-        phoneForm.classList.toggle("hidden", email);
-        setStatus("", "");
-      }
-
       togglePassword.addEventListener("click", function () {
         var hidden = passwordInput.type === "password";
         passwordInput.type = hidden ? "text" : "password";
         togglePassword.textContent = hidden ? "🙈" : "👁️";
       });
 
-      tabEmail.addEventListener("click", function () { switchMode("email"); });
-      tabPhone.addEventListener("click", function () { switchMode("phone"); });
-
-      sendCodeBtn.addEventListener("click", function () {
-        var phone = phoneInput.value.trim();
-        if (!phone) {
-          phone = "+1 000 000 0000";
-        }
-        var code = FoodAuth.sendOtp(phone);
-        setStatus("Verification message sent. Demo code: " + code + " (demo, any code will work).", "success");
-      });
+      // Wait for the backend JWT (up to ~1.5s) before navigating away, so the
+      // target page has a valid token on first paint and can fetch preferences.
+      function finishLogin(promise, label) {
+        setStatus(label + " Waiting for backend...", "success");
+        emailSubmit.disabled = true;
+        guestBtn.disabled = true;
+        Promise.resolve(promise).then(function () {
+          goToAppPage();
+        }).catch(function (err) {
+          emailSubmit.disabled = false;
+          guestBtn.disabled = false;
+          var msg = (err && err.message) ? err.message : "Login failed. Please try again.";
+          setStatus(msg, "error");
+        });
+      }
 
       emailForm.addEventListener("submit", function (e) {
         e.preventDefault();
         var email = emailInput.value.trim() || "guest@foodvision.local";
+        var password = passwordInput.value || "default_pass";
 
-        FoodAuth.loginEmail(email);
         if (rememberEmail.checked) {
           localStorage.setItem(REMEMBER_KEY, email);
         } else {
           localStorage.removeItem(REMEMBER_KEY);
         }
 
-        setStatus("Login successful (temporary session). Entering app...", "success");
-        setTimeout(goToAppPage, 350);
-      });
-
-      phoneForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-        var phone = phoneInput.value.trim() || "+1 000 000 0000";
-        FoodAuth.loginPhone(phone);
-        setStatus("Phone login successful (temporary session). Entering app...", "success");
-        setTimeout(goToAppPage, 350);
+        finishLogin(FoodAuth.loginEmail(email, password), "Logging in...");
       });
 
       guestBtn.addEventListener("click", function () {
-        FoodAuth.loginGuest();
-        setStatus("Guest mode enabled (temporary session). Entering app...", "success");
-        setTimeout(goToAppPage, 300);
+        finishLogin(FoodAuth.loginGuest(), "Guest session starting...");
       });
 
       var remembered = localStorage.getItem(REMEMBER_KEY);

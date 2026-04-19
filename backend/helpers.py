@@ -4,6 +4,29 @@ import json
 import re
 
 
+def as_list(v) -> list:
+    """Coerce a possibly-stringified list value back into a real list.
+
+    Jac's ShelfStorage occasionally returns class-default list values as the
+    string "[]" when a field was declared with a default of `[]` and then
+    never explicitly reassigned. This helper normalizes both that case and
+    genuine lists.
+    """
+    if isinstance(v, list):
+        return list(v)
+    if isinstance(v, str):
+        s = v.strip()
+        if s in ("", "[]"):
+            return []
+        try:
+            parsed = json.loads(s)
+            if isinstance(parsed, list):
+                return parsed
+        except (ValueError, TypeError):
+            pass
+    return []
+
+
 def safe_parse_json(text: str) -> dict:
     """Parse JSON from AI response, handling common issues."""
     if not text:

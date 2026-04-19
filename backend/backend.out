@@ -1,0 +1,42 @@
+⚠ Debug mode is enabled. For production, consider setting debug=false in  
+section of jac.toml
+INFO - Admin portal endpoints registered at /admin
+INFO - LLM telemetry: litellm CustomLogger registered
+INFO - LLM telemetry: byllm agent callback registered
+INFO - LLM telemetry endpoints registered: /admin/llm/telemetry/{summary,traces,traces/{id},filters}
+
+  JAC DEV SERVER v0.13.3
+
+  ➜  Local:     http://localhost:8000/
+
+  🚀 Server ready
+
+  JAC DEV SERVER v0.13.3
+
+  ➜  Local:     http://localhost:8000/
+
+  🚀 Server ready
+
+/home/yeszhong/.local/lib/python3.13/site-packages/pydantic/_internal/_fields.py:192: UserWarning: Field name "json" in "RequestBody" shadows an attribute in parent "BaseModel"
+  warnings.warn(
+  127.0.0.1:36516 - "GET /openapi.json HTTP/1.1" 404
+  127.0.0.1:36522 - "POST /walker/health HTTP/1.1" 405
+  127.0.0.1:36526 - "GET / HTTP/1.1" 404
+  127.0.0.1:36540 - "GET / HTTP/1.1" 404
+  127.0.0.1:36548 - "GET /openapi.json HTTP/1.1" 404
+  127.0.0.1:36558 - "GET /docs HTTP/1.1" 404
+  127.0.0.1:36566 - "GET /admin HTTP/1.1" 302
+Executing function 'health' with params: {}
+  127.0.0.1:38480 - "POST /function/health HTTP/1.1" 200
+Executing function 'analyze_meal' with params: {'image_base64': '', 'message': 
+'', 'user_profile': '{}'}
+  127.0.0.1:38494 - "POST /function/analyze_meal HTTP/1.1" 200
+Executing function 'health' with params: {}
+  127.0.0.1:44462 - "POST /function/health HTTP/1.1" 200
+  127.0.0.1:51360 - "OPTIONS /user/register HTTP/1.1" 200
+  127.0.0.1:51360 - "POST /user/register HTTP/1.1" 400
+  127.0.0.1:51360 - "OPTIONS /user/login HTTP/1.1" 200
+  127.0.0.1:51360 - "POST /user/login HTTP/1.1" 200
+  127.0.0.1:51360 - "OPTIONS /function/get_profile HTTP/1.1" 200
+Executing function 'get_profile' with params: {}
+  127.0.0.1:51360 - "POST /function/get_profile HTTP/1.1" 200

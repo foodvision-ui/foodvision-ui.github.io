@@ -17,7 +17,7 @@ import from os { getenv }
 import from requests { post as http_post }
 import from json { dumps as json_dumps }
 import from datetime { datetime as dt_cls }
-import from helpers { safe_parse_json }
+import from helpers { safe_parse_json, as_list }
 
 
 
@@ -152,19 +152,22 @@ def:priv get_profile() -> dict {
         profiles = [root()-->][?:UserProfile];
     }
     p = profiles[0];
+    # Jac's ShelfStorage can return the class-default "[]" as a stringified
+    # value for list fields that were never explicitly assigned. Normalize
+    # every list field so the JSON we ship always has a real array.
     return {
         "display_name": p.display_name,
         "habits": p.habits,
-        "dietary_restrictions": p.dietary_restrictions,
-        "allergies": p.allergies,
-        "cuisine_preferences": p.cuisine_preferences,
-        "flavor_preferences": p.flavor_preferences,
+        "dietary_restrictions": as_list(p.dietary_restrictions),
+        "allergies": as_list(p.allergies),
+        "cuisine_preferences": as_list(p.cuisine_preferences),
+        "flavor_preferences": as_list(p.flavor_preferences),
         "cooking_skill_level": p.cooking_skill_level,
-        "available_equipment": p.available_equipment,
-        "nutritional_goals": p.nutritional_goals,
-        "disliked_foods": p.disliked_foods,
-        "other_preferences": p.other_preferences,
-        "ai_learned_fields": p.ai_learned_fields,
+        "available_equipment": as_list(p.available_equipment),
+        "nutritional_goals": as_list(p.nutritional_goals),
+        "disliked_foods": as_list(p.disliked_foods),
+        "other_preferences": as_list(p.other_preferences),
+        "ai_learned_fields": as_list(p.ai_learned_fields),
         "updated_at": p.updated_at
     };
 }

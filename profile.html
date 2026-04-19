@@ -7,94 +7,248 @@
   <title>FoodVision AI | Profile</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="theme.css" />
   <style>
+    .profile-head {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .profile-identity {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .identity-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
     .avatar {
-      width: 98px;
-      height: 98px;
-      border-radius: 50%;
+      width: 72px;
+      height: 72px;
+      border-radius: 22px;
       display: grid;
       place-items: center;
-      font-size: 2.1rem;
-      background: linear-gradient(145deg, #ff9e6c, #ff6f3c);
+      font-size: 1.8rem;
+      background: linear-gradient(145deg, var(--accent-2), var(--accent));
       color: #fff;
-      margin-bottom: 10px;
+      box-shadow: 0 14px 28px rgba(255, 102, 51, 0.28);
+      flex-shrink: 0;
+    }
+
+    .identity-text h2 {
+      margin: 0 0 3px;
+      font-size: 1.3rem;
+    }
+
+    .identity-text .handle {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .identity-meta {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .meta-chip {
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .meta-chip .k {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 3px;
+    }
+
+    .meta-chip .v {
+      font-size: 0.96rem;
+      color: #2b1b12;
+      font-weight: 600;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #5a3620;
+      margin-bottom: 6px;
+      letter-spacing: 0.01em;
     }
 
     .actions {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      margin-top: 4px;
     }
 
     .pref-section {
-      margin-top: 16px;
+      margin-top: 22px;
     }
 
-    .pref-section h3 {
-      margin: 0 0 12px;
+    .pref-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .pref-head h2 {
+      margin: 4px 0 2px;
     }
 
     .pref-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 12px;
     }
 
     .pref-card {
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .86);
-      border: 1px solid rgba(255, 255, 255, .95);
-      padding: 10px 12px;
-      box-shadow: 0 6px 14px rgba(80, 40, 20, .08);
+      position: relative;
+      border-radius: 14px;
+      background: var(--card-strong);
+      border: 1px solid var(--line);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-sm);
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .pref-card.learned {
+      border-color: rgba(31, 157, 85, 0.28);
+      background: linear-gradient(180deg, rgba(230, 247, 236, 0.4), #fff);
+    }
+
+    .pref-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
     }
 
     .pref-card .pref-label {
-      font-size: .75rem;
-      color: #8a5e45;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.72rem;
+      color: #7a3d1f;
       text-transform: uppercase;
-      letter-spacing: .04em;
-      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
       font-weight: 700;
     }
 
     .pref-card .pref-value {
-      font-size: .92rem;
-      color: #3d291e;
-      font-weight: 500;
+      font-size: 1rem;
+      color: #2b1b12;
+      font-weight: 600;
     }
 
     .pref-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
+      gap: 6px;
     }
 
     .pref-tag {
       border-radius: 999px;
-      padding: 4px 10px;
-      font-size: .78rem;
-      font-weight: 700;
+      padding: 5px 11px;
+      font-size: 0.82rem;
+      font-weight: 600;
       color: #7a3d1f;
       background: #fff1e5;
-      border: 1px solid rgba(255, 255, 255, .95);
+      border: 1px solid rgba(255, 102, 51, 0.14);
+    }
+
+    .pref-tag.none {
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.7);
+      border-style: dashed;
     }
 
     .pref-empty {
       text-align: center;
-      color: #805941;
-      padding: 24px;
-      border: 1px dashed rgba(167, 118, 89, .35);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, .6);
+      color: var(--muted);
+      padding: 32px 24px;
+      border: 1px dashed var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.6);
     }
 
-    @media (max-width: 700px) {
-      .pref-grid {
-        grid-template-columns: 1fr;
-      }
+    .pref-empty a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .pref-empty a:hover { text-decoration: underline; }
+
+    .legend {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .pref-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .pref-edit-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #2b1b12;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .pref-edit-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 102, 51, 0.12);
+    }
+
+    .pref-edit-hint {
+      margin-top: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 860px) {
+      .profile-head { grid-template-columns: 1fr; }
+      .pref-grid { grid-template-columns: 1fr; }
+      .identity-meta { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -115,19 +269,39 @@
       </div>
       <nav class="nav-links">
         <a class="nav-link" href="index.html">Home</a>
-        <a class="nav-link" href="delivery.html">Delivery</a>
         <a class="nav-link" href="calories.html">Planner</a>
         <a class="nav-link active" href="profile.html">Profile</a>
+        <a class="nav-link" href="delivery.html">Delivery</a>
       </nav>
       <button id="topAuthBtn" class="ghost-btn">Sign Up / Login</button>
     </header>
 
-    <section class="panel grid grid-2">
-      <div class="card">
-        <div class="avatar">👨‍🍳</div>
-        <h3 id="welcomeText" style="margin:0 0 8px;">Welcome</h3>
-        <p class="hint">This page stores template records locally. All actions are open in guest mode.</p>
+    <section class="panel profile-head">
+      <div class="profile-identity">
+        <div class="identity-top">
+          <div class="avatar">👨‍🍳</div>
+          <div class="identity-text">
+            <span class="eyebrow">Your account</span>
+            <h2 id="welcomeText">Welcome</h2>
+            <div class="handle" id="handleText">— not signed in</div>
+          </div>
+        </div>
+        <p class="hint" style="margin:0;">
+          Your profile lives in the Jac graph on the backend. Preferences on this page reflect
+          the authoritative state — if the AI added something, you'll see it flagged.
+        </p>
+        <div class="identity-meta">
+          <div class="meta-chip">
+            <div class="k">Session</div>
+            <div class="v" id="sessionV">Visitor</div>
+          </div>
+          <div class="meta-chip">
+            <div class="k">Saved locally</div>
+            <div class="v" id="updatedV">Never</div>
+          </div>
+        </div>
       </div>
+
       <div class="card">
         <h3 style="margin-top:0;">Save Personal Record</h3>
         <div class="field">
@@ -140,25 +314,40 @@
         </div>
         <div class="field">
           <label for="habits">Eating Habits</label>
-          <textarea id="habits" rows="5" placeholder="Describe your habits and preferences..."></textarea>
+          <textarea id="habits" rows="4" placeholder="Describe your habits and preferences..."></textarea>
         </div>
         <div class="actions">
           <button id="saveBtn" class="pill-btn">Save Record</button>
-          <button id="payBtn" class="ghost-btn">Pay for Pro Plan</button>
         </div>
-        <div id="status" class="status" style="margin-top:8px;"></div>
+        <div id="status" class="status" style="margin-top:10px;"></div>
       </div>
     </section>
 
     <section class="panel pref-section">
-      <div class="card">
-        <h3>🍽️ Food Preferences (from Meal Planner)</h3>
-        <div id="prefContent">
-          <div class="pref-empty">
-            <strong style="display:block; margin-bottom:4px;">No food profile yet</strong>
-            <span>Use the <a href="calories.html" style="color:#ff6633; font-weight:600;">Meal Planner</a> to generate a
-              plan — your preferences will appear here automatically.</span>
+      <div class="pref-head">
+        <div>
+          <span class="eyebrow">Food preferences</span>
+          <h2>What we know about your taste</h2>
+          <p class="hint" style="margin:0; max-width:56ch;">
+            Green-bordered cards were learned by the AI from your meal history. Everything else
+            came from you directly.
+          </p>
+        </div>
+        <div class="pref-actions">
+          <div class="legend">
+            <span class="learned-pill">AI learned</span>
+            <span>= backend inferred</span>
           </div>
+          <button id="editPrefsBtn" class="pill-btn" type="button">✎ Edit preferences</button>
+          <button id="savePrefsBtn" class="pill-btn" type="button" style="display:none;">Save</button>
+          <button id="cancelPrefsBtn" class="ghost-btn" type="button" style="display:none;">Cancel</button>
+        </div>
+      </div>
+      <div id="prefStatus" class="status" style="margin-bottom:10px;"></div>
+      <div id="prefContent">
+        <div class="pref-empty">
+          <strong style="display:block; margin-bottom:6px; color:#2b1b12;">No food profile yet</strong>
+          <span>Use the <a href="calories.html">Meal Planner</a> to generate a recipe — your preferences will appear here automatically.</span>
         </div>
       </div>
     </section>
@@ -171,14 +360,25 @@
     (function () {
       var user = FoodAuth.getUser();
       var welcomeText = document.getElementById("welcomeText");
+      var handleText = document.getElementById("handleText");
+      var sessionV = document.getElementById("sessionV");
+      var updatedV = document.getElementById("updatedV");
       var displayName = document.getElementById("displayName");
       var email = document.getElementById("email");
       var habits = document.getElementById("habits");
       var saveBtn = document.getElementById("saveBtn");
-      var payBtn = document.getElementById("payBtn");
       var status = document.getElementById("status");
+      var editPrefsBtn   = document.getElementById("editPrefsBtn");
+      var savePrefsBtn   = document.getElementById("savePrefsBtn");
+      var cancelPrefsBtn = document.getElementById("cancelPrefsBtn");
+      var prefStatus     = document.getElementById("prefStatus");
+      var editMode = false;
       var authBinding = FoodAuth.wireTopbarAuth("topAuthBtn", refreshHeader);
-      var PROFILE_KEY = "foodvision.profile.data";
+
+      // Per-account localStorage keys — prevents one account from seeing
+      // another account's form data / cached preferences on the same browser.
+      function formCacheKey() { return FoodAuth.scopedKey("foodvision.profile.data"); }
+      function prefsCacheKey() { return FoodAuth.scopedKey("foodvision.userProfile"); }
 
       FoodAuth.showNoHistoryPopup();
 
@@ -186,8 +386,13 @@
         user = FoodAuth.getUser();
         if (!user) {
           welcomeText.textContent = "Welcome, visitor";
+          handleText.textContent = "— not signed in";
+          sessionV.textContent = "Visitor";
         } else {
-          welcomeText.textContent = user.email ? ("Welcome, " + user.email) : ("Welcome, " + (user.phone || "Guest"));
+          var who = user.email || user.phone || "Guest";
+          welcomeText.textContent = "Welcome, " + who;
+          handleText.textContent = user.mode === "guest" ? "Guest session" : user.mode === "phone" ? "Phone: " + user.phone : user.email;
+          sessionV.textContent = user.mode === "guest" ? "Guest" : user.mode === "phone" ? "Phone sign-in" : "Email sign-in";
         }
       }
 
@@ -203,13 +408,31 @@
         status.className = "status" + (type ? " " + type : "");
       }
 
-      function loadProfile() {
+      function formatStamp(iso) {
+        if (!iso) return "Never";
         try {
-          var p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null");
-          if (!p) return;
+          var d = new Date(iso);
+          return d.toLocaleString();
+        } catch (e) { return "Saved"; }
+      }
+
+      function loadProfile() {
+        var key = formCacheKey();
+        if (!key) { updatedV.textContent = "Never"; return; }
+        try {
+          var p = JSON.parse(localStorage.getItem(key) || "null");
+          if (!p) {
+            // Fresh account on this browser — clear any lingering form fields.
+            displayName.value = "";
+            email.value = (user && user.email) || "";
+            habits.value = "";
+            updatedV.textContent = "Never";
+            return;
+          }
           displayName.value = p.displayName || "";
           email.value = p.email || ((user && user.email) || "");
           habits.value = p.habits || "";
+          updatedV.textContent = formatStamp(p.updatedAt);
         } catch (err) { }
       }
 
@@ -220,75 +443,260 @@
           habits: habits.value.trim(),
           updatedAt: new Date().toISOString()
         };
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(payload));
-        // Also persist to Jac backend if authenticated
+        var key = formCacheKey();
+        if (key) localStorage.setItem(key, JSON.stringify(payload));
         if (FoodAuth.getJwt()) {
           FoodAuth.apiCall("/function/update_profile", {
             display_name: payload.displayName,
             habits: payload.habits
           }, true);
         }
+        updatedV.textContent = formatStamp(payload.updatedAt);
         setStatus("Profile saved.", "success");
-      });
-
-      payBtn.addEventListener("click", function () {
-        alert("Pro plan enabled (demo). Guest access is allowed in this template.");
       });
 
       refreshHeader();
       loadProfile();
       toggleEditable(true);
+      // Render cached preferences first so the grid never flashes empty on refresh.
+      loadFoodPrefs();
 
-      // Try to load profile from Jac backend (authoritative source).
-      // Provenance of AI-learned fields comes from the backend's ai_learned_fields array.
-      if (FoodAuth.getJwt()) {
+      // Then fetch authoritative profile from backend — but wait for the JWT
+      // to actually be populated, since login is async and the modal may have
+      // closed before the token arrived.
+      function fetchBackendProfile() {
         FoodAuth.apiCall("/function/get_profile", {}, true).then(function (res) {
           if (res && res.ok && res.data && res.data.result) {
             var bp = res.data.result;
             if (bp.display_name && !displayName.value) displayName.value = bp.display_name;
             if (bp.habits && !habits.value) habits.value = bp.habits;
-            localStorage.setItem("foodvision.userProfile", JSON.stringify(bp));
+            var pk = prefsCacheKey();
+            if (pk) localStorage.setItem(pk, JSON.stringify(bp));
             loadFoodPrefs();
           }
         }).catch(function () {});
       }
 
-      // Load food preferences from Meal Planner
+      if (FoodAuth.isAuthenticated()) {
+        if (FoodAuth.getJwt()) {
+          fetchBackendProfile();
+        } else if (typeof FoodAuth.ready === "function") {
+          FoodAuth.ready(4000).then(function (jwt) {
+            if (jwt) fetchBackendProfile();
+          });
+        }
+      }
+
+      function renderEmptyPrefs() {
+        var prefContent = document.getElementById("prefContent");
+        prefContent.innerHTML =
+          '<div class="pref-empty">' +
+            '<strong style="display:block; margin-bottom:6px; color:#2b1b12;">No food profile yet</strong>' +
+            '<span>Use the <a href="calories.html">Meal Planner</a> to generate a recipe — your preferences will appear here automatically.</span>' +
+          '</div>';
+      }
+
+      var LIST_FIELDS_SPEC = [
+        { field: "dietary_restrictions", label: "Dietary Restrictions" },
+        { field: "allergies",           label: "Allergies" },
+        { field: "cuisine_preferences", label: "Cuisine Preferences" },
+        { field: "flavor_preferences",  label: "Flavor Preferences" },
+        { field: "available_equipment", label: "Available Equipment" },
+        { field: "nutritional_goals",   label: "Nutritional Goals" },
+        { field: "disliked_foods",      label: "Disliked Foods" }
+      ];
+      var SKILL_OPTIONS = ["Beginner", "Intermediate", "Advanced", "Expert"];
+
+      function setPrefStatus(msg, type) {
+        prefStatus.textContent = msg || "";
+        prefStatus.className = "status" + (type ? " " + type : "");
+      }
+
+      function updateEditControls() {
+        editPrefsBtn.style.display   = editMode ? "none" : "inline-block";
+        savePrefsBtn.style.display   = editMode ? "inline-block" : "none";
+        cancelPrefsBtn.style.display = editMode ? "inline-block" : "none";
+      }
+
+      function getFoodPrefs() {
+        var pk = prefsCacheKey();
+        var raw = pk ? localStorage.getItem(pk) : null;
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch (e) { return null; }
+      }
+
+      function escAttr(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function renderEditCard(field, label, value, isList, learnedSet) {
+        var isLearned = !!learnedSet[field];
+        var learnedBadge = isLearned ? '<span class="learned-pill">AI learned</span>' : '';
+        var learnedCls   = isLearned ? ' learned' : '';
+        var body;
+        if (isList) {
+          var joined = (value || []).join(", ");
+          var hint = isLearned
+            ? 'Your edits override the AI-inferred value. Separate with commas.'
+            : 'Separate multiple values with commas.';
+          body = '<input id="edit_' + field + '" class="pref-edit-input" type="text" value="' + escAttr(joined) + '" placeholder="e.g. Korean, Italian" />' +
+                 '<div class="pref-edit-hint">' + hint + '</div>';
+        } else {
+          var current = value || "Intermediate";
+          var opts = SKILL_OPTIONS.map(function (o) {
+            return '<option value="' + escAttr(o) + '"' + (o === current ? " selected" : "") + '>' + escAttr(o) + '</option>';
+          }).join("");
+          body = '<select id="edit_' + field + '" class="pref-edit-input">' + opts + '</select>';
+        }
+        return '<div class="pref-card' + learnedCls + '">' +
+          '<div class="pref-label">' + label + learnedBadge + '</div>' +
+          body + '</div>';
+      }
+
       function loadFoodPrefs() {
         var prefContent = document.getElementById("prefContent");
-        var raw = localStorage.getItem("foodvision.userProfile");
-        if (!raw) return;
-        try {
-          var fp = JSON.parse(raw);
-          if (!fp) return;
+        var fp = getFoodPrefs();
 
-          var learnedSet = {};
-          (fp.ai_learned_fields || []).forEach(function (k) { learnedSet[k] = true; });
+        if (editMode) {
+          var source = fp || {};
+          var learnedSetE = {};
+          (source.ai_learned_fields || []).forEach(function (k) { learnedSetE[k] = true; });
+          var editCards = LIST_FIELDS_SPEC.map(function (s) {
+            return renderEditCard(s.field, s.label, source[s.field], true, learnedSetE);
+          });
+          editCards.splice(4, 0, renderEditCard("cooking_skill_level", "Cooking Skill Level", source.cooking_skill_level, false, learnedSetE));
+          prefContent.innerHTML = '<div class="pref-grid">' + editCards.join("") + '</div>';
+          updateEditControls();
+          return;
+        }
 
-          function learnedBadge(field) {
-            return learnedSet[field] ? ' <span style="font-size:.65rem;color:#1f9d55;font-weight:700;vertical-align:middle;">AI learned</span>' : '';
-          }
+        if (!fp) { renderEmptyPrefs(); updateEditControls(); return; }
 
-          function tagsHtml(arr) {
-            if (!arr || !arr.length) return '<span class="pref-tag" style="opacity:.6;">None</span>';
-            return arr.map(function (v) { return '<span class="pref-tag">' + v + '</span>'; }).join('');
-          }
+        var learnedSet = {};
+        (fp.ai_learned_fields || []).forEach(function (k) { learnedSet[k] = true; });
 
-          prefContent.innerHTML = [
-            '<div class="pref-grid">',
-            '  <div class="pref-card"><div class="pref-label">Dietary Restrictions' + learnedBadge("dietary_restrictions") + '</div><div class="pref-tags">' + tagsHtml(fp.dietary_restrictions) + '</div></div>',
-            '  <div class="pref-card"><div class="pref-label">Allergies' + learnedBadge("allergies") + '</div><div class="pref-tags">' + tagsHtml(fp.allergies) + '</div></div>',
-            '  <div class="pref-card"><div class="pref-label">Cuisine Preferences' + learnedBadge("cuisine_preferences") + '</div><div class="pref-tags">' + tagsHtml(fp.cuisine_preferences) + '</div></div>',
-            '  <div class="pref-card"><div class="pref-label">Flavor Preferences' + learnedBadge("flavor_preferences") + '</div><div class="pref-tags">' + tagsHtml(fp.flavor_preferences) + '</div></div>',
-            '  <div class="pref-card"><div class="pref-label">Cooking Skill Level' + learnedBadge("cooking_skill_level") + '</div><div class="pref-value">' + (fp.cooking_skill_level || 'Unknown') + '</div></div>',
-            '  <div class="pref-card"><div class="pref-label">Available Equipment' + learnedBadge("available_equipment") + '</div><div class="pref-tags">' + tagsHtml(fp.available_equipment) + '</div></div>',
-            '  <div class="pref-card"><div class="pref-label">Nutritional Goals' + learnedBadge("nutritional_goals") + '</div><div class="pref-tags">' + tagsHtml(fp.nutritional_goals) + '</div></div>',
-            '  <div class="pref-card"><div class="pref-label">Disliked Foods' + learnedBadge("disliked_foods") + '</div><div class="pref-tags">' + tagsHtml(fp.disliked_foods) + '</div></div>',
-            '</div>'
-          ].join('');
-        } catch (e) { }
+        function learnedBadge(field) { return learnedSet[field] ? '<span class="learned-pill">AI learned</span>' : ''; }
+        function learnedClass(field) { return learnedSet[field] ? ' learned' : ''; }
+        function tagsHtml(arr) {
+          if (!arr || !arr.length) return '<span class="pref-tag none">None</span>';
+          return arr.map(function (v) { return '<span class="pref-tag">' + v + '</span>'; }).join('');
+        }
+        function card(field, label, value, isTags) {
+          var inner = isTags
+            ? '<div class="pref-tags">' + tagsHtml(value) + '</div>'
+            : '<div class="pref-value">' + (value || 'Unknown') + '</div>';
+          return '<div class="pref-card' + learnedClass(field) + '">' +
+            '<div class="pref-label">' + label + learnedBadge(field) + '</div>' +
+            inner + '</div>';
+        }
+
+        prefContent.innerHTML = '<div class="pref-grid">' + [
+          card("dietary_restrictions", "Dietary Restrictions", fp.dietary_restrictions, true),
+          card("allergies", "Allergies", fp.allergies, true),
+          card("cuisine_preferences", "Cuisine Preferences", fp.cuisine_preferences, true),
+          card("flavor_preferences", "Flavor Preferences", fp.flavor_preferences, true),
+          card("cooking_skill_level", "Cooking Skill Level", fp.cooking_skill_level, false),
+          card("available_equipment", "Available Equipment", fp.available_equipment, true),
+          card("nutritional_goals", "Nutritional Goals", fp.nutritional_goals, true),
+          card("disliked_foods", "Disliked Foods", fp.disliked_foods, true)
+        ].join('') + '</div>';
+
+        updateEditControls();
       }
-      loadFoodPrefs();
+
+      function parseListInput(val) {
+        return String(val || "")
+          .split(",")
+          .map(function (s) { return s.trim(); })
+          .filter(function (s) { return s.length > 0; });
+      }
+
+      editPrefsBtn.addEventListener("click", function () {
+        if (!FoodAuth.isAuthenticated()) {
+          setPrefStatus("Sign in to edit your preferences.", "error");
+          return;
+        }
+        editMode = true;
+        setPrefStatus("");
+        loadFoodPrefs();
+      });
+
+      cancelPrefsBtn.addEventListener("click", function () {
+        editMode = false;
+        setPrefStatus("");
+        loadFoodPrefs();
+      });
+
+      savePrefsBtn.addEventListener("click", function () {
+        if (!FoodAuth.isAuthenticated()) {
+          setPrefStatus("Sign in to save preferences.", "error");
+          return;
+        }
+        var before = getFoodPrefs() || {};
+        var payload = {};
+        var clearedFields = [];
+        LIST_FIELDS_SPEC.forEach(function (s) {
+          var el = document.getElementById("edit_" + s.field);
+          if (!el) return;
+          var next = parseListInput(el.value);
+          var prev = Array.isArray(before[s.field]) ? before[s.field] : [];
+          // Backend treats [] as "no change", so warn the user if they tried to clear.
+          if (next.length === 0 && prev.length > 0) {
+            clearedFields.push(s.label);
+          } else if (next.length > 0) {
+            payload[s.field] = next;
+          }
+        });
+        var skillEl = document.getElementById("edit_cooking_skill_level");
+        if (skillEl && skillEl.value) payload.cooking_skill_level = skillEl.value;
+
+        if (clearedFields.length) {
+          setPrefStatus("Keep at least one value for: " + clearedFields.join(", "), "error");
+          return;
+        }
+
+        savePrefsBtn.disabled = true;
+        setPrefStatus("Saving…");
+
+        function describeErr(res) {
+          if (!res) return "no response from server";
+          if (res.error) {
+            if (typeof res.error === "string") return res.error;
+            if (res.error.message) return res.error.message;
+            if (res.error.code)    return res.error.code;
+          }
+          return "server rejected update";
+        }
+
+        FoodAuth.apiCall("/function/update_profile", payload, true).then(function (res) {
+          console.log("update_profile response:", res);
+          if (!res || res.ok === false) {
+            var msg = describeErr(res);
+            if (/UNAUTHORIZED|401/i.test(msg)) {
+              throw new Error("session expired — please sign in again");
+            }
+            throw new Error(msg);
+          }
+          return FoodAuth.apiCall("/function/get_profile", {}, true);
+        }).then(function (res) {
+          console.log("get_profile response:", res);
+          var bp = res && res.data && res.data.result;
+          if (bp) {
+            var pk = prefsCacheKey();
+            if (pk) localStorage.setItem(pk, JSON.stringify(bp));
+          }
+          editMode = false;
+          savePrefsBtn.disabled = false;
+          loadFoodPrefs();
+          setPrefStatus("Preferences updated.", "success");
+        }).catch(function (err) {
+          console.error("save prefs failed:", err);
+          savePrefsBtn.disabled = false;
+          setPrefStatus("Could not save preferences: " + (err && err.message ? err.message : "unknown error"), "error");
+        });
+      });
 
       if (authBinding && typeof authBinding.refresh === "function") {
         authBinding.refresh();
